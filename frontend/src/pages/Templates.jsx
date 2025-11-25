@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Layout from '@/components/Layout'
-import Table from '@/components/Table'
 import Modal from '@/components/Modal'
 import { useForm } from 'react-hook-form'
 import { templatesAPI } from '@/api/templates'
@@ -27,7 +26,7 @@ export default function Templates() {
   }
 
   const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this template?')) {
+    if (confirm('Delete this template?')) {
       try {
         await templatesAPI.delete(id)
         refetch()
@@ -41,54 +40,51 @@ export default function Templates() {
     <Layout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Templates</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Templates</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Create and manage email templates</p>
+          </div>
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:shadow-md transition-all font-medium text-sm"
           >
-            New Template
+            + New
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">Subject</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">Created</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center">Loading...</td>
-                </tr>
-              ) : templates && templates.length > 0 ? (
-                templates.map((template) => (
-                  <tr key={template.id} className="border-b hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm">{template.name}</td>
-                    <td className="px-6 py-4 text-sm">{template.subject}</td>
-                    <td className="px-6 py-4 text-sm">{template.created_at}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <button
-                        onClick={() => handleDelete(template.id)}
-                        className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center text-gray-600">No templates yet</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          </div>
+        ) : templates && templates.length > 0 ? (
+          <div className="grid grid-cols-1 gap-3">
+            {templates.map((template) => (
+              <div key={template.id} className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow-sm p-4 border border-green-100 hover:shadow-md transition-all">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-gray-900">{template.name}</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">Subject: {template.subject}</p>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-gray-500 mb-3">{new Date(template.created_at).toLocaleDateString()}</p>
+                
+                <button
+                  onClick={() => handleDelete(template.id)}
+                  className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-all font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-8 text-center border-2 border-dashed border-green-200">
+            <p className="text-2xl mb-2">📝</p>
+            <p className="text-gray-600 text-sm">No templates yet</p>
+            <p className="text-gray-500 text-xs mt-1">Create your first template to get started</p>
+          </div>
+        )}
       </div>
 
       <Modal
@@ -99,13 +95,13 @@ export default function Templates() {
           <>
             <button
               onClick={() => setCreateModalOpen(false)}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all font-medium text-sm"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit(onSubmit)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all font-medium text-sm"
             >
               Create
             </button>
@@ -114,35 +110,32 @@ export default function Templates() {
       >
         <form className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Template Name
-            </label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Name</label>
             <input
               {...register('name', { required: true })}
               type="text"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Template name"
+              className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-sm"
             />
           </div>
           
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Subject
-            </label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Subject</label>
             <input
               {...register('subject', { required: true })}
               type="text"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Email subject"
+              className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-sm"
             />
           </div>
           
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              HTML Content
-            </label>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">HTML Content</label>
             <textarea
               {...register('html', { required: true })}
               rows={6}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Paste HTML content"
+              className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all font-mono text-xs"
             />
           </div>
         </form>

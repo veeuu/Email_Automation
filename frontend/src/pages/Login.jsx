@@ -28,52 +28,70 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center">Email Marketing</h1>
-        
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
-            {error}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mb-4">
+            <span className="text-2xl">✉️</span>
           </div>
-        )}
-        
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">
-              Email
-            </label>
-            <input
-              {...register('email', { required: 'Email is required' })}
-              type="email"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.email && (
-              <span className="text-red-500 text-sm">{errors.email.message}</span>
-            )}
-          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            EmailFlow
+          </h1>
+          <p className="text-gray-600">Your marketing, amplified</p>
+        </div>
+
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 backdrop-blur-sm border border-gray-100">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
+              {error}
+            </div>
+          )}
           
-          <div className="mb-6">
-            <label className="block text-gray-700 font-semibold mb-2">
-              Password
-            </label>
-            <input
-              {...register('password', { required: 'Password is required' })}
-              type="password"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.password && (
-              <span className="text-red-500 text-sm">{errors.password.message}</span>
-            )}
-          </div>
-          
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700"
-          >
-            Login
-          </button>
-        </form>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input
+                {...register('email', { required: 'Email is required' })}
+                type="email"
+                placeholder="you@example.com"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+              />
+              {errors.email && (
+                <span className="text-red-500 text-sm mt-1 block">{errors.email.message}</span>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                {...register('password', { required: 'Password is required' })}
+                type="password"
+                placeholder="••••••••"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+              />
+              {errors.password && (
+                <span className="text-red-500 text-sm mt-1 block">{errors.password.message}</span>
+              )}
+            </div>
+            
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:shadow-lg hover:shadow-indigo-200 transition-all duration-300 transform hover:-translate-y-0.5"
+            >
+              Sign In
+            </button>
+          </form>
+
+          <p className="text-center text-gray-600 text-sm mt-6">
+            Demo: demo@example.com / demo123456
+          </p>
+        </div>
       </div>
     </div>
   )
