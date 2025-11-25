@@ -10,6 +10,7 @@ import analyticsRoutes from './routes/analytics.js';
 import trackingRoutes from './routes/tracking.js';
 import workflowsRoutes from './routes/workflows.js';
 import settingsRoutes from './routes/settings.js';
+import canvaRoutes from './routes/canva.js';
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use('/analytics', analyticsRoutes);
 app.use('/tracking', trackingRoutes);
 app.use('/workflows', workflowsRoutes);
 app.use('/settings', settingsRoutes);
+app.use('/api/canva', canvaRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

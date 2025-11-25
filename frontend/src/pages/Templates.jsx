@@ -133,10 +133,16 @@ export default function Templates() {
             <label className="block text-xs font-semibold text-gray-700 mb-1">HTML Content</label>
             <textarea
               {...register('html', { required: true })}
-              rows={6}
-              placeholder="Paste HTML content"
+              rows={8}
+              placeholder="Paste your HTML email template here..."
               className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all font-mono text-xs"
             />
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-xs text-blue-700">
+              💡 Tip: Use standard HTML/CSS. The tracking pixel will be automatically added.
+            </p>
           </div>
         </form>
       </Modal>
