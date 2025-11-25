@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Layout from '@/components/Layout'
 import Modal from '@/components/Modal'
+import AIEmailGenerator from '@/components/AIEmailGenerator'
 import { useForm } from 'react-hook-form'
 import { templatesAPI } from '@/api/templates'
 
 export default function Templates() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
-  const { register, handleSubmit, reset } = useForm()
+  const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false)
+  const { register, handleSubmit, reset, setValue } = useForm()
 
   const { data: templates, isLoading, refetch } = useQuery({
     queryKey: ['templates'],
@@ -22,6 +24,20 @@ export default function Templates() {
       refetch()
     } catch (error) {
       console.error('Create template failed:', error)
+    }
+  }
+
+  const handleAITemplateGenerated = async (template) => {
+    try {
+      await templatesAPI.create({
+        name: template.name,
+        subject: `Email from AI - ${template.name}`,
+        html: template.html,
+      })
+      setAiGeneratorOpen(false)
+      refetch()
+    } catch (error) {
+      console.error('Save AI template failed:', error)
     }
   }
 
@@ -44,12 +60,20 @@ export default function Templates() {
             <h1 className="text-2xl font-bold text-gray-900">Templates</h1>
             <p className="text-sm text-gray-500 mt-0.5">Create and manage email templates</p>
           </div>
-          <button
-            onClick={() => setCreateModalOpen(true)}
-            className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:shadow-md transition-all font-medium text-sm"
-          >
-            + New
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setAiGeneratorOpen(true)}
+              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-md transition-all font-medium text-sm"
+            >
+              ✨ AI Generate
+            </button>
+            <button
+              onClick={() => setCreateModalOpen(true)}
+              className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:shadow-md transition-all font-medium text-sm"
+            >
+              + New
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -146,6 +170,13 @@ export default function Templates() {
           </div>
         </form>
       </Modal>
+
+      {aiGeneratorOpen && (
+        <AIEmailGenerator
+          onTemplateGenerated={handleAITemplateGenerated}
+          onClose={() => setAiGeneratorOpen(false)}
+        />
+      )}
     </Layout>
   )
 }
