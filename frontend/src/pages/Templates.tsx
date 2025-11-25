@@ -33,11 +33,16 @@ export default function Templates() {
     }
   }
 
-  const columns = [
-    { key: 'name' as const, label: 'Name' },
-    { key: 'subject' as const, label: 'Subject' },
-    { key: 'created_at' as const, label: 'Created' },
-  ]
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this template?')) {
+      try {
+        await templatesAPI.delete(id)
+        refetch()
+      } catch (error) {
+        console.error('Delete failed:', error)
+      }
+    }
+  }
 
   return (
     <Layout>
@@ -52,12 +57,44 @@ export default function Templates() {
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <Table
-            columns={columns}
-            data={templates || []}
-            loading={isLoading}
-          />
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">Subject</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">Created</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-center">Loading...</td>
+                </tr>
+              ) : templates && templates.length > 0 ? (
+                templates.map((template) => (
+                  <tr key={template.id} className="border-b hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm">{template.name}</td>
+                    <td className="px-6 py-4 text-sm">{template.subject}</td>
+                    <td className="px-6 py-4 text-sm">{template.created_at}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <button
+                        onClick={() => handleDelete(template.id)}
+                        className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-center text-gray-600">No templates yet</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

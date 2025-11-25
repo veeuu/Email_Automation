@@ -17,6 +17,7 @@ export const campaignsAPI = {
   start: (id: string) => client.post(`/campaigns/${id}/start`),
   pause: (id: string) => client.post(`/campaigns/${id}/pause`),
   cancel: (id: string) => client.post(`/campaigns/${id}/cancel`),
+  delete: (id: string) => client.delete(`/campaigns/${id}`),
   sendTest: (id: string, testEmail: string) =>
     client.post(`/campaigns/${id}/send_test`, { test_email: testEmail }),
 }

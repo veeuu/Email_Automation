@@ -18,4 +18,5 @@ export const templatesAPI = {
   update: (id: string, data: Partial<Template>) =>
     client.put<Template>(`/templates/${id}`, data),
   delete: (id: string) => client.delete(`/templates/${id}`),
+  deleteTemplate: (id: string) => client.delete(`/templates/${id}`),
 }

@@ -27,12 +27,16 @@ export default function Subscribers() {
     }
   }
 
-  const columns = [
-    { key: 'email' as const, label: 'Email' },
-    { key: 'name' as const, label: 'Name' },
-    { key: 'status' as const, label: 'Status' },
-    { key: 'created_at' as const, label: 'Created' },
-  ]
+  const handleDelete = async (id: string) => {
+    if (confirm('Delete this subscriber?')) {
+      try {
+        await subscribersAPI.delete(id)
+        refetch()
+      } catch (error) {
+        console.error('Delete failed:', error)
+      }
+    }
+  }
 
   return (
     <Layout>
@@ -47,12 +51,54 @@ export default function Subscribers() {
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <Table
-            columns={columns}
-            data={data?.items || []}
-            loading={isLoading}
-          />
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">Created</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center">Loading...</td>
+                </tr>
+              ) : data?.items && data.items.length > 0 ? (
+                data.items.map((subscriber) => (
+                  <tr key={subscriber.id} className="border-b hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm">{subscriber.email}</td>
+                    <td className="px-6 py-4 text-sm">{subscriber.name || '-'}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                        subscriber.status === 'active' ? 'bg-green-100 text-green-800' :
+                        subscriber.status === 'unsubscribed' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {subscriber.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm">{subscriber.created_at}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <button
+                        onClick={() => handleDelete(subscriber.id)}
+                        className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-600">No subscribers yet</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
 
         {data && (

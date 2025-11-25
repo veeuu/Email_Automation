@@ -150,6 +150,16 @@ export default function Campaigns() {
                           Pause
                         </button>
                       )}
+                      <button
+                        onClick={() => {
+                          if (confirm('Delete this campaign?')) {
+                            campaignsAPI.delete(campaign.id).then(() => refetch())
+                          }
+                        }}
+                        className="px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))

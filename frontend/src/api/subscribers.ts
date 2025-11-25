@@ -52,5 +52,7 @@ export const subscribersAPI = {
   
   unsubscribe: (id: string) => client.post(`/subscribers/${id}/unsubscribe`),
   
+  delete: (id: string) => client.delete(`/subscribers/${id}`),
+  
   export: () => client.get('/subscribers/export'),
 }

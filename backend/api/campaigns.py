@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.session import get_db
-from db.models import Campaign, Template
+from db.models import Campaign, Template, SendLog
 from api.auth import get_current_user
 from campaigns.manager import CampaignManager
 from pydantic import BaseModel, field_validator
@@ -152,3 +152,22 @@ def cancel_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
     return {"status": "cancelled"}
+
+
+@router.delete("/{campaign_id}")
+def delete_campaign(
+    campaign_id: UUID,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    # Delete associated send logs
+    db.query(SendLog).filter(SendLog.campaign_id == campaign_id).delete()
+    
+    # Delete campaign
+    db.delete(campaign)
+    db.commit()
+    return {"status": "deleted"}

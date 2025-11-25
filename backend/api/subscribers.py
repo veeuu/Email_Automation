@@ -129,3 +129,23 @@ def export_subscribers(
     service = SubscriberService(db)
     csv_data = service.export_csv()
     return {"csv": csv_data}
+
+
+@router.delete("/{subscriber_id}")
+def delete_subscriber(
+    subscriber_id: UUID,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    subscriber = db.query(Subscriber).filter(Subscriber.id == subscriber_id).first()
+    if not subscriber:
+        raise HTTPException(status_code=404, detail="Subscriber not found")
+    
+    # Delete associated events and send logs
+    db.query(Event).filter(Event.subscriber_id == subscriber_id).delete()
+    db.query(SendLog).filter(SendLog.subscriber_id == subscriber_id).delete()
+    
+    # Delete subscriber
+    db.delete(subscriber)
+    db.commit()
+    return {"status": "deleted"}
