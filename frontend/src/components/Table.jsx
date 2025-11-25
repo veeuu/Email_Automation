@@ -1,24 +1,11 @@
 import React from 'react'
 
-interface Column<T> {
-  key: keyof T
-  label: string
-  render?: (value: any, row: T) => React.ReactNode
-}
-
-interface TableProps<T> {
-  columns: Column<T>[]
-  data: T[]
-  loading?: boolean
-  onRowClick?: (row: T) => void
-}
-
-export default function Table<T extends { id: string }>({
+export default function Table({
   columns,
   data,
   loading = false,
   onRowClick,
-}: TableProps<T>) {
+}) {
   if (loading) {
     return <div className="text-center py-8">Loading...</div>
   }

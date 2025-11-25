@@ -6,26 +6,12 @@ import { campaignsAPI } from '@/api/campaigns'
 import { templatesAPI } from '@/api/templates'
 import { useForm } from 'react-hook-form'
 
-interface CampaignForm {
-  name: string
-  template_id: string
-  send_rate: number
-}
-
-interface Campaign {
-  id: string
-  name: string
-  status: string
-  send_rate: number
-  created_at: string
-}
-
 export default function Campaigns() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [testModalOpen, setTestModalOpen] = useState(false)
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null)
+  const [selectedCampaign, setSelectedCampaign] = useState(null)
   const [testEmail, setTestEmail] = useState('')
-  const { register, handleSubmit, reset } = useForm<CampaignForm>()
+  const { register, handleSubmit, reset } = useForm()
 
   const { data: campaigns, isLoading, refetch } = useQuery({
     queryKey: ['campaigns'],
@@ -37,7 +23,7 @@ export default function Campaigns() {
     queryFn: () => templatesAPI.list().then((res) => res.data),
   })
 
-  const onSubmit = async (data: CampaignForm) => {
+  const onSubmit = async (data) => {
     try {
       await campaignsAPI.create(data)
       setCreateModalOpen(false)
@@ -48,7 +34,7 @@ export default function Campaigns() {
     }
   }
 
-  const handleStart = async (campaign: Campaign) => {
+  const handleStart = async (campaign) => {
     try {
       await campaignsAPI.start(campaign.id)
       refetch()
@@ -57,7 +43,7 @@ export default function Campaigns() {
     }
   }
 
-  const handlePause = async (campaign: Campaign) => {
+  const handlePause = async (campaign) => {
     try {
       await campaignsAPI.pause(campaign.id)
       refetch()

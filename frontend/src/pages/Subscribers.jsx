@@ -8,7 +8,7 @@ import { subscribersAPI } from '@/api/subscribers'
 export default function Subscribers() {
   const [page, setPage] = useState(1)
   const [importModalOpen, setImportModalOpen] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedFile, setSelectedFile] = useState(null)
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['subscribers', page],
@@ -27,7 +27,7 @@ export default function Subscribers() {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id) => {
     if (confirm('Delete this subscriber?')) {
       try {
         await subscribersAPI.delete(id)

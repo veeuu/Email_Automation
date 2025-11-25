@@ -108,6 +108,33 @@ function initializeDatabase() {
       )
     `);
 
+    // Workflows table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS workflows (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        trigger TEXT NOT NULL,
+        actions TEXT,
+        status TEXT DEFAULT 'active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Settings table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS settings (
+        id INTEGER PRIMARY KEY,
+        smtp_host TEXT,
+        smtp_port INTEGER,
+        smtp_user TEXT,
+        smtp_password TEXT,
+        dkim_domain TEXT,
+        dkim_selector TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     console.log('Database tables initialized');
   });
 }

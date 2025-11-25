@@ -3,11 +3,7 @@ import { useUIStore } from '@/store/ui'
 import Sidebar from './Sidebar'
 import Header from './Header'
 
-interface LayoutProps {
-  children: React.ReactNode
-}
-
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children }) {
   const sidebarOpen = useUIStore((state) => state.sidebarOpen)
 
   return (

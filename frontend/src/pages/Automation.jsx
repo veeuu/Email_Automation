@@ -6,30 +6,16 @@ import Modal from '@/components/Modal'
 import { useForm } from 'react-hook-form'
 import client from '@/api/client'
 
-interface WorkflowForm {
-  name: string
-  trigger: string
-  actions: string
-}
-
-interface Workflow {
-  id: string
-  name: string
-  trigger: string
-  status: string
-  created_at: string
-}
-
 export default function Automation() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
-  const { register, handleSubmit, reset } = useForm<WorkflowForm>()
+  const { register, handleSubmit, reset } = useForm()
 
   const { data: workflows, isLoading, refetch } = useQuery({
     queryKey: ['workflows'],
-    queryFn: () => client.get<Workflow[]>('/workflows').then((res) => res.data),
+    queryFn: () => client.get('/workflows').then((res) => res.data),
   })
 
-  const onSubmit = async (formData: WorkflowForm) => {
+  const onSubmit = async (formData) => {
     try {
       await client.post('/workflows', formData)
       setCreateModalOpen(false)
@@ -41,10 +27,10 @@ export default function Automation() {
   }
 
   const columns = [
-    { key: 'name' as const, label: 'Name' },
-    { key: 'trigger' as const, label: 'Trigger' },
-    { key: 'status' as const, label: 'Status' },
-    { key: 'created_at' as const, label: 'Created' },
+    { key: 'name', label: 'Name' },
+    { key: 'trigger', label: 'Trigger' },
+    { key: 'status', label: 'Status' },
+    { key: 'created_at', label: 'Created' },
   ]
 
   return (

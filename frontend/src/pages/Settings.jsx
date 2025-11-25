@@ -4,25 +4,16 @@ import Layout from '@/components/Layout'
 import { useForm } from 'react-hook-form'
 import client from '@/api/client'
 
-interface SettingsForm {
-  smtp_host: string
-  smtp_port: number
-  smtp_user: string
-  smtp_password: string
-  dkim_domain: string
-  dkim_selector: string
-}
-
 export default function Settings() {
   const [saved, setSaved] = useState(false)
-  const { register, handleSubmit } = useForm<SettingsForm>()
+  const { register, handleSubmit } = useForm()
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['settings'],
     queryFn: () => client.get('/settings').then((res) => res.data),
   })
 
-  const onSubmit = async (formData: SettingsForm) => {
+  const onSubmit = async (formData) => {
     try {
       await client.post('/settings', formData)
       setSaved(true)

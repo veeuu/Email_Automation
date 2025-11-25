@@ -1,7 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
-import csv from 'csv-parse/sync';
+import { parse } from 'csv-parse/sync';
 import db from '../db/database.js';
 import { verifyToken } from '../middleware/auth.js';
 
@@ -46,7 +46,7 @@ router.post('/bulk_import', verifyToken, upload.single('file'), (req, res) => {
 
   try {
     const csvContent = req.file.buffer.toString('utf-8');
-    const records = csv.parse(csvContent, { columns: true });
+    const records = parse(csvContent, { columns: true });
 
     let imported = 0;
     let skipped = 0;

@@ -37,61 +37,52 @@ services:
 
   api:
     build:
-      context: ./backend
+      context: ./backend-node
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
-      DATABASE_URL: postgresql://user:password@postgres:5432/email_marketing
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/1
-      CELERY_RESULT_BACKEND: redis://redis:6379/2
-      SMTP_HOST: mailhog
-      SMTP_PORT: 1025
-      SMTP_FROM_EMAIL: noreply@example.com
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
-    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
-
-  worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    environment:
-      DATABASE_URL: postgresql://user:password@postgres:5432/email_marketing
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/1
-      CELERY_RESULT_BACKEND: redis://redis:6379/2
-      SMTP_HOST: mailhog
-      SMTP_PORT: 1025
-      SMTP_FROM_EMAIL: noreply@example.com
+      PORT: 8000
+      NODE_ENV: production
+      API_BASE_URL: https://api.proplusdata.co
+      BASE_URL: https://proplusdata.co
     depends_on:
       - postgres
       - redis
-    volumes:
-      - ./backend:/app
-    command: celery -A workers.worker worker --loglevel=info
+    networks:
+      - app-network
 
-  frontend:
+  web:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
-      REACT_APP_API_URL: http://localhost:8000
+      VITE_API_URL: https://api.proplusdata.co
     depends_on:
       - api
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    command: npm run dev
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+      - web
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  app-network:
+    driver: bridge

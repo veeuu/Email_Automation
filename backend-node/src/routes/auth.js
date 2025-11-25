@@ -1,19 +1,14 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
-import { v4 as uuidv4 } from 'uuid';
+import bcryptjs from 'bcryptjs';
 import db from '../db/database.js';
 import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
 const SECRET_KEY = process.env.SECRET_KEY || 'your-secret-key-change-in-production';
 
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
-}
-
-function verifyPassword(plainPassword, hashedPassword) {
-  return hashPassword(plainPassword) === hashedPassword;
+async function verifyPassword(plainPassword, hashedPassword) {
+  return await bcryptjs.compare(plainPassword, hashedPassword);
 }
 
 function createAccessToken(userId) {
@@ -21,10 +16,10 @@ function createAccessToken(userId) {
 }
 
 // Login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
+  db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
     if (err) {
       return res.status(500).json({ detail: 'Database error' });
     }
@@ -33,7 +28,8 @@ router.post('/login', (req, res) => {
       return res.status(401).json({ detail: 'Invalid credentials' });
     }
 
-    if (!verifyPassword(password, user.hashed_password)) {
+    const isPasswordValid = await verifyPassword(password, user.hashed_password);
+    if (!isPasswordValid) {
       return res.status(401).json({ detail: 'Invalid credentials' });
     }
 

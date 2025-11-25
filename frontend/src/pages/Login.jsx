@@ -4,19 +4,14 @@ import { useForm } from 'react-hook-form'
 import { authAPI } from '@/api/auth'
 import { useAuthStore } from '@/store/auth'
 
-interface LoginForm {
-  email: string
-  password: string
-}
-
 export default function Login() {
   const navigate = useNavigate()
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>()
+  const { register, handleSubmit, formState: { errors } } = useForm()
   const [error, setError] = useState('')
   const setToken = useAuthStore((state) => state.setToken)
   const setUser = useAuthStore((state) => state.setUser)
 
-  const onSubmit = async (data: LoginForm) => {
+  const onSubmit = async (data) => {
     try {
       setError('')
       const response = await authAPI.login(data)
@@ -26,7 +21,7 @@ export default function Login() {
       setUser(userResponse.data)
       
       navigate('/')
-    } catch (err: any) {
+    } catch (err) {
       const errorMessage = err.response?.data?.detail || err.message || 'Login failed'
       setError(typeof errorMessage === 'string' ? errorMessage : 'Login failed')
     }

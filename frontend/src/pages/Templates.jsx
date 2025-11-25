@@ -6,23 +6,16 @@ import Modal from '@/components/Modal'
 import { useForm } from 'react-hook-form'
 import { templatesAPI } from '@/api/templates'
 
-interface TemplateForm {
-  name: string
-  subject: string
-  html: string
-  text_content?: string
-}
-
 export default function Templates() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
-  const { register, handleSubmit, reset } = useForm<TemplateForm>()
+  const { register, handleSubmit, reset } = useForm()
 
   const { data: templates, isLoading, refetch } = useQuery({
     queryKey: ['templates'],
     queryFn: () => templatesAPI.list().then((res) => res.data),
   })
 
-  const onSubmit = async (data: TemplateForm) => {
+  const onSubmit = async (data) => {
     try {
       await templatesAPI.create(data)
       setCreateModalOpen(false)
@@ -33,7 +26,7 @@ export default function Templates() {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this template?')) {
       try {
         await templatesAPI.delete(id)
