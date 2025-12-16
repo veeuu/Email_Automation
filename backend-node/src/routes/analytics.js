@@ -14,7 +14,7 @@ router.get('/', verifyToken, (req, res) => {
       (SELECT COUNT(*) FROM events WHERE event_type = 'unsubscribe') as totalUnsubscribed`,
     (err, result) => {
       if (err) {
-        return res.status(500).json({ detail: 'Database error' });
+        return res.status(500).json({ detail: 'Database error'});
       }
 
       res.json({
