@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { CampaignSendButton } from "./send-button";
+import { EditPanel } from "./edit-panel";
+import { AddRecipients } from "./add-recipients";
+import { RecipientsList } from "./recipients-list";
 
 export default async function CampaignDetailPage({
   params,
@@ -39,6 +42,14 @@ export default async function CampaignDetailPage({
     FAILED: "text-red-700 bg-red-100",
   };
 
+  const recipientsWithEvents = campaign.recipients.map((r: typeof campaign.recipients[0]) => ({
+    id: r.id,
+    email: r.email,
+    hasSent: campaign.events.some((e: Ev) => e.recipientId === r.id && e.eventType === "SENT"),
+    hasOpened: campaign.events.some((e: Ev) => e.recipientId === r.id && e.eventType === "OPENED"),
+    hasBounced: campaign.events.some((e: Ev) => e.recipientId === r.id && e.eventType === "BOUNCED"),
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar email={session.user?.email ?? ""} />
@@ -56,6 +67,8 @@ export default async function CampaignDetailPage({
               <span className={`text-xs px-3 py-1 rounded-full font-medium ${STATUS_STYLE[campaign.status]}`}>
                 {campaign.status}
               </span>
+              <AddRecipients campaignId={campaign.id} />
+              <EditPanel campaignId={campaign.id} name={campaign.name} subject={campaign.subject} content={campaign.content} />
               {campaign.status === "DRAFT" && (
                 <CampaignSendButton campaignId={campaign.id} recipientCount={campaign.recipients.length} />
               )}
@@ -93,27 +106,10 @@ export default async function CampaignDetailPage({
           <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
               <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Recipients ({campaign.recipients.length})
+                Recipients ({campaign.recipients.length}) — hover to remove
               </h2>
             </div>
-            <div className="divide-y divide-gray-100 max-h-64 overflow-auto">
-              {campaign.recipients.map((r: typeof campaign.recipients[0]) => {
-                const recipientEvents = campaign.events.filter((e: Ev) => e.recipientId === r.id);
-                const hasSent = recipientEvents.some((e: Ev) => e.eventType === "SENT");
-                const hasOpened = recipientEvents.some((e: Ev) => e.eventType === "OPENED");
-                const hasBounced = recipientEvents.some((e: Ev) => e.eventType === "BOUNCED");
-                return (
-                  <div key={r.id} className="flex items-center justify-between px-6 py-3 text-sm hover:bg-gray-50 transition-colors">
-                    <span className="font-mono text-gray-700">{r.email}</span>
-                    <div className="flex gap-2">
-                      {hasSent && <span className="text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded-full font-medium">Sent</span>}
-                      {hasOpened && <span className="text-xs text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full font-medium">Opened</span>}
-                      {hasBounced && <span className="text-xs text-red-700 bg-red-100 px-2 py-0.5 rounded-full font-medium">Bounced</span>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <RecipientsList campaignId={campaign.id} recipients={recipientsWithEvents} />
           </div>
         </div>
       </main>

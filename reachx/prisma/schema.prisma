@@ -19,6 +19,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   campaigns     Campaign[]
+  contacts      Contact[]
 }
 
 model Account {
@@ -54,6 +55,21 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  phone     String?
+  company   String?
+  tags      String?
+  userId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([email, userId])
 }
 
 model Campaign {

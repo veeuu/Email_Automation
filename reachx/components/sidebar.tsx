@@ -13,6 +13,7 @@ export function Sidebar({ email }: { email: string }) {
       {[
         { label: "Dashboard", href: "/dashboard", icon: "▦" },
         { label: "Campaigns", href: "/dashboard/campaigns", icon: "✉" },
+        { label: "Contacts", href: "/dashboard/contacts", icon: "👥" },
         { label: "Validate Emails", href: "/validate", icon: "✓" },
         { label: "Analytics", href: "/dashboard/analytics", icon: "↗" },
       ].map((item) => (
