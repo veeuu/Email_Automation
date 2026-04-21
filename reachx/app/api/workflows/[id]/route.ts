@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
   const workflow = await prisma.workflow.findFirst({
     where: { id, userId: session.user.id },
-    include: { steps: true },
+    include: { steps: { orderBy: { order: "asc" } } },
   });
   if (!workflow) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(workflow);
@@ -35,6 +35,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...(body.status !== undefined && { status: body.status }),
       ...(body.triggerType !== undefined && { triggerType: body.triggerType }),
       ...(body.triggerConfig !== undefined && { triggerConfig: body.triggerConfig }),
+      ...(body.allowReEnrollment !== undefined && { allowReEnrollment: body.allowReEnrollment }),
+      ...(body.exitOnUnsubscribe !== undefined && { exitOnUnsubscribe: body.exitOnUnsubscribe }),
     },
   });
   return NextResponse.json(updated);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 type Contact = { id: string; email: string; name: string | null; phone: string | null; company: string | null; tags: string | null };
@@ -13,10 +13,59 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
   const [contacts, setContacts] = useState(initialContacts);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showEnroll, setShowEnroll] = useState(false);
   const [form, setForm] = useState({ email: "", name: "", phone: "", company: "", tags: "" });
   const [csvText, setCsvText] = useState("");
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [workflows, setWorkflows] = useState<Array<{ id: string; name: string; status: string }>>([]);
+  const [enrollWorkflowId, setEnrollWorkflowId] = useState("");
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollResult, setEnrollResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (showEnroll && workflows.length === 0) {
+      fetch("/api/workflows").then((r) => r.json()).then((data) => {
+        setWorkflows(data.filter((w: { status: string }) => w.status === "ACTIVE"));
+      });
+    }
+  }, [showEnroll, workflows.length]);
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll(ids: string[]) {
+    setSelected((prev) => {
+      if (ids.every((id) => prev.has(id))) return new Set();
+      return new Set(ids);
+    });
+  }
+
+  async function handleEnroll() {
+    if (!enrollWorkflowId) return;
+    setEnrolling(true);
+    setEnrollResult(null);
+    const emails = contacts.filter((c) => selected.has(c.id)).map((c) => c.email);
+    const res = await fetch(`/api/workflows/${enrollWorkflowId}/enroll`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emails }),
+    });
+    const data = await res.json();
+    setEnrolling(false);
+    if (res.ok) {
+      setEnrollResult(`✓ ${data.enrolled} contact${data.enrolled !== 1 ? "s" : ""} enrolled`);
+      setTimeout(() => { setShowEnroll(false); setSelected(new Set()); setEnrollResult(null); }, 1500);
+    } else {
+      setEnrollResult(`Error: ${data.error}`);
+    }
+  }
 
   const filtered = contacts.filter(
     (c) =>
@@ -69,6 +118,15 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">Contacts</h1>
         </div>
         <div className="flex items-center gap-2">
+          {selected.size > 0 && (
+            <button onClick={() => setShowEnroll(true)}
+              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+              </svg>
+              Enroll {selected.size} in Workflow
+            </button>
+          )}
           <button onClick={() => setShowImport(true)} className="flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-800 px-4 py-2.5 rounded-xl text-sm font-medium transition-all">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
@@ -137,6 +195,46 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
         </div>
       )}
 
+      {/* Enroll in workflow modal */}
+      {showEnroll && (
+        <div className={modalBase}>
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-slate-900">Enroll in Workflow</h2>
+              <ModalClose onClose={() => setShowEnroll(false)} />
+            </div>
+            <p className="text-sm text-slate-500">{selected.size} contact{selected.size !== 1 ? "s" : ""} selected</p>
+            {workflows.length === 0 ? (
+              <p className="text-sm text-slate-400 bg-slate-50 rounded-xl p-4">No active workflows found. Activate a workflow first.</p>
+            ) : (
+              <div className="space-y-2">
+                {workflows.map((wf) => (
+                  <button key={wf.id} onClick={() => setEnrollWorkflowId(wf.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${enrollWorkflowId === wf.id ? "border-indigo-300 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}>
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${enrollWorkflowId === wf.id ? "border-indigo-600" : "border-slate-300"}`}>
+                      {enrollWorkflowId === wf.id && <div className="w-2 h-2 rounded-full bg-indigo-600" />}
+                    </div>
+                    <span className="text-sm font-medium text-slate-800">{wf.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {enrollResult && (
+              <p className={`text-sm font-medium ${enrollResult.startsWith("✓") ? "text-emerald-600" : "text-rose-500"}`}>{enrollResult}</p>
+            )}
+            <div className="flex gap-2 pt-1">
+              <button onClick={handleEnroll} disabled={enrolling || !enrollWorkflowId || workflows.length === 0}
+                className="flex-1 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold transition-all">
+                {enrolling ? "Enrolling..." : "Enroll Contacts"}
+              </button>
+              <button onClick={() => setShowEnroll(false)} className="px-4 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-800 border border-slate-200 hover:bg-slate-50 transition-all">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats strip */}
       <div className="grid grid-cols-3 gap-3">
         {[
@@ -195,14 +293,24 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50">
-                {["Email", "Name", "Company", "Tags", ""].map((h, i) => (
-                  <th key={i} className="px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-left">{h}</th>
+                {["", "Email", "Name", "Company", "Tags", ""].map((h, i) => (
+                  <th key={i} className="px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-left">
+                    {i === 0 ? (
+                      <input type="checkbox"
+                        checked={filtered.length > 0 && filtered.every((c) => selected.has(c.id))}
+                        onChange={() => toggleAll(filtered.map((c) => c.id))}
+                        className="rounded border-slate-300" />
+                    ) : h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
+                  <td className="px-5 py-3.5">
+                    <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} className="rounded border-slate-300" />
+                  </td>
                   <td className="px-5 py-3.5 font-mono text-slate-700 text-xs">{c.email}</td>
                   <td className="px-5 py-3.5 text-slate-600">{c.name ?? <span className="text-slate-300">—</span>}</td>
                   <td className="px-5 py-3.5 text-slate-600">{c.company ?? <span className="text-slate-300">—</span>}</td>
