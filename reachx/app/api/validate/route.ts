@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import dns from "dns/promises";
+
+// Allow up to 60s for Apify polling on Vercel/Railway
+export const maxDuration = 60;
 
 type ApifyResult = {
   email: string;
@@ -78,6 +82,35 @@ function mapApifyResult(r: ApifyResult) {
   return { email: r.email, status: "RISKY", reason: "Could not verify" };
 }
 
+const DISPOSABLE_DOMAINS = new Set([
+  "mailinator.com", "guerrillamail.com", "tempmail.com", "throwaway.email",
+  "yopmail.com", "sharklasers.com", "guerrillamailblock.com", "grr.la",
+  "guerrillamail.info", "spam4.me", "trashmail.com", "dispostable.com",
+]);
+
+async function fastValidate(email: string) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { email, status: "INVALID", reason: "Invalid email format" };
+  }
+
+  const domain = email.split("@")[1].toLowerCase();
+
+  if (DISPOSABLE_DOMAINS.has(domain)) {
+    return { email, status: "INVALID", reason: "Disposable email provider" };
+  }
+
+  try {
+    const records = await dns.resolveMx(domain);
+    if (!records || records.length === 0) {
+      return { email, status: "INVALID", reason: "No MX records found for domain" };
+    }
+    return { email, status: "RISKY", reason: "Format and MX valid (deep check unavailable)" };
+  } catch {
+    return { email, status: "INVALID", reason: "Domain does not exist or has no mail server" };
+  }
+}
+
 // POST /api/validate
 export async function POST(req: NextRequest) {
   const { emails } = await req.json();
@@ -91,9 +124,9 @@ export async function POST(req: NextRequest) {
     const results = apifyResults.map(mapApifyResult);
     return NextResponse.json({ results });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Validation failed" },
-      { status: 500 }
-    );
+    console.warn("Apify failed, falling back to fast validation:", err);
+    // Fallback: run lightweight format + MX check
+    const results = await Promise.all(emails.map(fastValidate));
+    return NextResponse.json({ results });
   }
 }
