@@ -1,0 +1,5 @@
+{
+  "builder": "railpack",
+  "buildCommand": "cd reachx && npm run build",
+  "startCommand": "cd reachx && npm start"
+}
