@@ -19,202 +19,116 @@ export default async function DashboardPage() {
   type Ev = Campaign["events"][0];
   const cnt = (events: Ev[], type: string) => events.filter((e) => e.eventType === type).length;
 
-  const totalSent = campaigns.reduce((acc: number, c: Campaign) => acc + cnt(c.events, "SENT"), 0);
-  const totalOpened = campaigns.reduce((acc: number, c: Campaign) => acc + cnt(c.events, "OPENED"), 0);
-  const totalClicked = campaigns.reduce((acc: number, c: Campaign) => acc + cnt(c.events, "CLICKED"), 0);
-  const openRate = totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) + "%" : "—";
-  const clickRate = totalSent > 0 ? ((totalClicked / totalSent) * 100).toFixed(1) + "%" : "—";
+  const totalSent = campaigns.reduce((a: number, c: Campaign) => a + cnt(c.events, "SENT"), 0);
+  const totalOpened = campaigns.reduce((a: number, c: Campaign) => a + cnt(c.events, "OPENED"), 0);
+  const totalClicked = campaigns.reduce((a: number, c: Campaign) => a + cnt(c.events, "CLICKED"), 0);
+  const openRate = totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : null;
+  const clickRate = totalSent > 0 ? ((totalClicked / totalSent) * 100).toFixed(1) : null;
   const name = session.user?.name ?? session.user?.email?.split("@")[0] ?? "there";
 
   const STATUS_STYLE: Record<string, string> = {
-    DRAFT:   "text-slate-400 bg-slate-500/10 border-slate-500/20",
-    SENDING: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-    SENT:    "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-    FAILED:  "text-rose-400 bg-rose-500/10 border-rose-500/20",
+    DRAFT: "text-slate-500 bg-slate-100 border-slate-200",
+    SENDING: "text-amber-600 bg-amber-50 border-amber-200",
+    SENT: "text-emerald-600 bg-emerald-50 border-emerald-200",
+    FAILED: "text-rose-600 bg-rose-50 border-rose-200",
   };
 
-  const STATS = [
-    {
-      label: "Campaigns",
-      value: String(campaigns.length),
-      sub: "total",
-      color: "text-indigo-400",
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-          <polyline points="22,6 12,13 2,6"/>
-        </svg>
-      ),
-    },
-    {
-      label: "Emails Sent",
-      value: String(totalSent),
-      sub: "all time",
-      color: "text-sky-400",
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-      ),
-    },
-    {
-      label: "Open Rate",
-      value: openRate,
-      sub: "average",
-      color: "text-violet-400",
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-        </svg>
-      ),
-    },
-    {
-      label: "Click Rate",
-      value: clickRate,
-      sub: "average",
-      color: "text-emerald-400",
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-        </svg>
-      ),
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex">
+    <div className="min-h-screen bg-slate-50 flex">
       <Sidebar email={session.user?.email ?? ""} />
       <main className="flex-1 overflow-auto">
-        <div className="max-w-6xl mx-auto px-8 py-10 space-y-10">
-
-          {/* Header */}
-          <div className="flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-8 py-8 space-y-7">
+          <div className="flex items-center justify-between pt-1">
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
-                Good to see you, {name}
+              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest mb-1">Dashboard</p>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+                Good to see you, <span className="text-indigo-600">{name}</span>
               </h1>
-              <p className="text-slate-500 text-sm mt-1">Here&apos;s an overview of your campaigns.</p>
             </div>
             <Link href="/dashboard/campaigns/new">
-              <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-indigo-900/40">
-                + New Campaign
+              <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                New Campaign
               </button>
             </Link>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {STATS.map((s) => (
-              <div key={s.label} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 hover:bg-white/[0.05] transition-colors">
-                <div className={`${s.color} mb-3`}>{s.icon}</div>
-                <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
-                <div className="text-xs font-medium text-slate-400 mt-1">{s.label}</div>
-                <div className="text-xs text-slate-600 mt-0.5">{s.sub}</div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: "Campaigns", value: String(campaigns.length), sub: "total created", color: "text-indigo-600", bar: "bg-indigo-500", barW: Math.min(campaigns.length * 10, 100) },
+              { label: "Emails Sent", value: totalSent.toLocaleString(), sub: "all time", color: "text-sky-600", bar: "bg-sky-500", barW: Math.min(totalSent, 100) },
+              { label: "Open Rate", value: openRate ? openRate + "%" : "—", sub: "avg. across campaigns", color: "text-violet-600", bar: "bg-violet-500", barW: openRate ? Math.min(parseFloat(openRate), 100) : 0 },
+              { label: "Click Rate", value: clickRate ? clickRate + "%" : "—", sub: "avg. across campaigns", color: "text-emerald-600", bar: "bg-emerald-500", barW: clickRate ? Math.min(parseFloat(clickRate), 100) : 0 },
+            ].map((s) => (
+              <div key={s.label} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 hover:shadow-sm transition-all">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{s.label}</span>
+                <div>
+                  <div className={"text-3xl font-bold " + s.color}>{s.value}</div>
+                  <div className="text-xs text-slate-400 mt-1">{s.sub}</div>
+                </div>
+                <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                  <div className={"h-full " + s.bar + " rounded-full stat-bar"} style={{ width: s.barW + "%" }} />
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Quick Actions */}
-          <div className="space-y-3">
-            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Quick actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {[
-                {
-                  title: "New Campaign",
-                  desc: "Create and send an email campaign",
-                  href: "/dashboard/campaigns/new",
-                  color: "text-indigo-400",
-                  bg: "bg-indigo-500/10 border-indigo-500/20",
-                  icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-                },
-                {
-                  title: "Validate Emails",
-                  desc: "Check a list before sending",
-                  href: "/dashboard/validate",
-                  color: "text-emerald-400",
-                  bg: "bg-emerald-500/10 border-emerald-500/20",
-                  icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
-                },
-                {
-                  title: "View Analytics",
-                  desc: "Deep dive into performance",
-                  href: "/dashboard/analytics",
-                  color: "text-violet-400",
-                  bg: "bg-violet-500/10 border-violet-500/20",
-                  icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
-                },
-              ].map((a) => (
-                <Link key={a.title} href={a.href}
-                  className="group flex items-center gap-4 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 hover:border-white/10 rounded-xl p-4 transition-all">
-                  <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${a.bg} ${a.color}`}>
-                    {a.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-white">{a.title}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{a.desc}</div>
-                  </div>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600 group-hover:text-slate-400 group-hover:translate-x-0.5 transition-all shrink-0">
-                    <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
-                  </svg>
-                </Link>
-              ))}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[
+              { title: "New Campaign", desc: "Create and send an email campaign", href: "/dashboard/campaigns/new" },
+              { title: "Validate Emails", desc: "Check a list before sending", href: "/dashboard/validate" },
+              { title: "View Analytics", desc: "Deep dive into performance", href: "/dashboard/analytics" },
+            ].map((a) => (
+              <Link key={a.title} href={a.href} className="group flex items-center gap-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-2xl p-4 transition-all hover:shadow-sm">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-slate-800">{a.title}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{a.desc}</div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300 group-hover:text-slate-500 shrink-0">
+                  <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+                </svg>
+              </Link>
+            ))}
           </div>
 
-          {/* Recent Campaigns */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Recent campaigns</h2>
-              <Link href="/dashboard/campaigns" className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-                View all →
-              </Link>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Recent campaigns</p>
+              <Link href="/dashboard/campaigns" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors">View all</Link>
             </div>
-
             {campaigns.length === 0 ? (
-              <div className="bg-white/[0.02] border border-dashed border-white/10 rounded-2xl p-16 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                </div>
-                <p className="text-slate-500 font-medium mb-1">No campaigns yet</p>
-                <p className="text-slate-600 text-sm mb-5">Create your first campaign to get started.</p>
+              <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-14 text-center">
+                <p className="text-slate-700 font-semibold mb-1">No campaigns yet</p>
+                <p className="text-slate-400 text-sm mb-5">Create your first campaign to get started.</p>
                 <Link href="/dashboard/campaigns/new">
-                  <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-indigo-900/40 transition-all">
-                    Create campaign →
-                  </button>
+                  <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all">Create campaign</button>
                 </Link>
               </div>
             ) : (
-              <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden">
+              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-white/5">
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Campaign</th>
-                      <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Recipients</th>
-                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Sent</th>
-                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Opened</th>
+                    <tr className="border-b border-slate-100 bg-slate-50">
+                      {["Campaign", "Status", "Recipients", "Sent", "Opened"].map((h, i) => (
+                        <th key={h} className={"px-5 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider " + (i === 0 ? "text-left" : "text-right")}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/[0.04]">
+                  <tbody className="divide-y divide-slate-100">
                     {campaigns.map((c: Campaign) => (
-                      <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
+                      <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
                         <td className="px-5 py-4">
-                          <Link href={`/dashboard/campaigns/${c.id}`} className="font-medium text-white hover:text-indigo-300 transition-colors text-sm">
-                            {c.name}
-                          </Link>
-                          <div className="text-xs text-slate-600 mt-0.5 truncate max-w-xs">{c.subject}</div>
+                          <Link href={"/dashboard/campaigns/" + c.id} className="font-medium text-slate-800 group-hover:text-indigo-600 transition-colors text-sm">{c.name}</Link>
+                          <div className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">{c.subject}</div>
                         </td>
-                        <td className="px-5 py-4">
-                          <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-full font-medium border ${STATUS_STYLE[c.status]}`}>
-                            {c.status}
-                          </span>
+                        <td className="px-5 py-4 text-right">
+                          <span className={"inline-flex items-center text-[11px] px-2.5 py-1 rounded-full font-semibold border " + STATUS_STYLE[c.status]}>{c.status}</span>
                         </td>
-                        <td className="px-5 py-4 text-right text-sm text-slate-400">{c._count.recipients}</td>
-                        <td className="px-5 py-4 text-right text-sm text-slate-400">{cnt(c.events, "SENT")}</td>
-                        <td className="px-5 py-4 text-right text-sm text-slate-400">{cnt(c.events, "OPENED")}</td>
+                        <td className="px-5 py-4 text-right text-sm text-slate-500">{c._count.recipients}</td>
+                        <td className="px-5 py-4 text-right text-sm text-slate-500">{cnt(c.events, "SENT")}</td>
+                        <td className="px-5 py-4 text-right text-sm text-slate-500">{cnt(c.events, "OPENED")}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -222,7 +136,6 @@ export default async function DashboardPage() {
               </div>
             )}
           </div>
-
         </div>
       </main>
     </div>

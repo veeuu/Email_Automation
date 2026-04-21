@@ -2,17 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
-type Props = {
-  campaignId: string;
-  name: string;
-  subject: string;
-  content: string;
-};
+const inputCls = "w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all";
 
-export function EditPanel({ campaignId, name, subject, content }: Props) {
+export function EditPanel({ campaignId, name, subject, content }: { campaignId: string; name: string; subject: string; content: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name, subject, content });
@@ -34,32 +27,45 @@ export function EditPanel({ campaignId, name, subject, content }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-800 border border-slate-200 hover:bg-slate-50 transition-all"
       >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
         Edit
       </button>
 
       {open && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full space-y-4 shadow-xl">
-            <h2 className="text-lg font-bold text-gray-900">Edit Campaign</h2>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Campaign name</label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="rounded-xl" />
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-2xl w-full space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-slate-900">Edit Campaign</h2>
+              <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Subject line</label>
-              <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className="rounded-xl" />
+              <label className="text-sm font-medium text-slate-700">Campaign name</label>
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700">Email content</label>
-              <Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={8} className="rounded-xl font-mono text-sm" />
+              <label className="text-sm font-medium text-slate-700">Subject line</label>
+              <input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className={inputCls} />
             </div>
-            <div className="flex gap-3">
-              <button onClick={handleSave} disabled={loading} className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 rounded-xl font-medium disabled:opacity-50">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700">Email content</label>
+              <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={10} className={`${inputCls} font-mono resize-none`} />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button onClick={handleSave} disabled={loading} className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold transition-all">
                 {loading ? "Saving..." : "Save changes"}
               </button>
-              <button onClick={() => setOpen(false)} className="px-4 py-2 rounded-xl text-gray-600 border border-gray-200">Cancel</button>
+              <button onClick={() => setOpen(false)} className="px-4 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-800 border border-slate-200 hover:bg-slate-50 transition-all">
+                Cancel
+              </button>
             </div>
           </div>
         </div>
