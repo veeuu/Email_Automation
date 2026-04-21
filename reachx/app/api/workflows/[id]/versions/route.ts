@@ -34,7 +34,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   await prisma.workflowStep.deleteMany({ where: { workflowId: id } });
   if (steps.length > 0) {
-    await prisma.workflowStep.createMany({ data: steps.map((s) => ({ ...s, workflowId: id })) });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await prisma.workflowStep.createMany({ data: steps.map((s) => ({ ...s, workflowId: id })) as any });
   }
 
   return NextResponse.json({ restored: true, version: version.version });
