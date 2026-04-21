@@ -34,12 +34,13 @@ export default async function CampaignDetailPage({
   const sent = cnt("SENT");
   const opened = cnt("OPENED");
   const clicked = cnt("CLICKED");
+  const bounced = cnt("BOUNCED");
 
   const STATUS_STYLE: Record<string, string> = {
-    DRAFT: "text-gray-600 bg-gray-100",
-    SENDING: "text-amber-700 bg-amber-100",
-    SENT: "text-green-700 bg-green-100",
-    FAILED: "text-red-700 bg-red-100",
+    DRAFT:   "text-slate-400 bg-slate-500/10 border-slate-500/20",
+    SENDING: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    SENT:    "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+    FAILED:  "text-rose-400 bg-rose-500/10 border-rose-500/20",
   };
 
   const recipientsWithEvents = campaign.recipients.map((r: typeof campaign.recipients[0]) => ({
@@ -50,21 +51,31 @@ export default async function CampaignDetailPage({
     hasBounced: campaign.events.some((e: Ev) => e.recipientId === r.id && e.eventType === "BOUNCED"),
   }));
 
+  const STATS = [
+    { label: "Recipients", value: campaign.recipients.length, color: "text-indigo-400", sub: null },
+    { label: "Sent",       value: sent,    color: "text-sky-400",     sub: null },
+    { label: "Opened",     value: opened,  color: "text-violet-400",  sub: sent > 0 ? `${((opened / sent) * 100).toFixed(1)}% rate` : null },
+    { label: "Clicked",    value: clicked, color: "text-emerald-400", sub: sent > 0 ? `${((clicked / sent) * 100).toFixed(1)}% rate` : null },
+    { label: "Bounced",    value: bounced, color: "text-rose-400",    sub: null },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[#0a0a0f] flex">
       <Sidebar email={session.user?.email ?? ""} />
-      <main className="flex-1 overflow-auto p-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="flex items-start justify-between">
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-5xl mx-auto px-8 py-10 space-y-8">
+
+          {/* Header */}
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <Link href="/dashboard/campaigns" className="text-gray-400 hover:text-gray-600 text-sm transition-colors">
+              <Link href="/dashboard/campaigns" className="text-slate-500 hover:text-slate-300 text-sm transition-colors">
                 ← Campaigns
               </Link>
-              <h1 className="text-2xl font-bold text-gray-900 mt-2">{campaign.name}</h1>
-              <p className="text-gray-500 text-sm mt-1">{campaign.subject}</p>
+              <h1 className="text-2xl font-bold text-white mt-2 tracking-tight">{campaign.name}</h1>
+              <p className="text-slate-500 text-sm mt-1">{campaign.subject}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-xs px-3 py-1 rounded-full font-medium ${STATUS_STYLE[campaign.status]}`}>
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              <span className={`text-xs px-3 py-1.5 rounded-full font-medium border ${STATUS_STYLE[campaign.status]}`}>
                 {campaign.status}
               </span>
               <AddRecipients campaignId={campaign.id} />
@@ -76,41 +87,35 @@ export default async function CampaignDetailPage({
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: "Recipients", value: campaign.recipients.length, color: "from-blue-500 to-blue-600" },
-              { label: "Sent", value: sent, color: "from-purple-500 to-purple-600" },
-              { label: "Opened", value: opened, color: "from-green-500 to-green-600" },
-              { label: "Clicked", value: clicked, color: "from-orange-500 to-orange-600" },
-            ].map((s) => (
-              <div key={s.label} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                <div className="text-xs text-gray-500 uppercase tracking-wider font-medium">{s.label}</div>
-                <div className={`text-2xl font-bold mt-2 bg-gradient-to-r ${s.color} bg-clip-text text-transparent`}>{s.value}</div>
-                {s.label === "Opened" && sent > 0 && (
-                  <div className="text-xs text-gray-400 mt-0.5">{((opened / sent) * 100).toFixed(1)}% open rate</div>
-                )}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {STATS.map((s) => (
+              <div key={s.label} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 hover:bg-white/[0.05] transition-colors">
+                <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
+                <div className="text-xs font-medium text-slate-400 mt-1">{s.label}</div>
+                {s.sub && <div className="text-xs text-slate-600 mt-0.5">{s.sub}</div>}
               </div>
             ))}
           </div>
 
           {/* Content preview */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-3">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email content</h2>
+          <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-6 space-y-3">
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Email content</h2>
             <div
-              className="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-xl p-4 max-h-48 overflow-auto font-mono"
+              className="text-sm text-slate-400 bg-white/[0.02] border border-white/5 rounded-xl p-4 max-h-48 overflow-auto font-mono"
               dangerouslySetInnerHTML={{ __html: campaign.content }}
             />
           </div>
 
           {/* Recipients */}
-          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Recipients ({campaign.recipients.length}) — hover to remove
+          <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-white/5">
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                Recipients ({campaign.recipients.length})
               </h2>
             </div>
             <RecipientsList campaignId={campaign.id} recipients={recipientsWithEvents} />
           </div>
+
         </div>
       </main>
     </div>

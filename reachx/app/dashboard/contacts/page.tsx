@@ -14,10 +14,12 @@ export default async function ContactsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[#0a0a0f] flex">
       <Sidebar email={session.user?.email ?? ""} />
-      <main className="flex-1 overflow-auto p-8">
-        <ContactsClient initialContacts={contacts} />
+      <main className="flex-1 overflow-auto">
+        <div className="px-8 py-10">
+          <ContactsClient initialContacts={contacts} />
+        </div>
       </main>
     </div>
   );

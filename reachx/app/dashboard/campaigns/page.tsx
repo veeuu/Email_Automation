@@ -19,77 +19,87 @@ export default async function CampaignsPage() {
   const cnt = (events: Ev[], type: string) => events.filter((e) => e.eventType === type).length;
 
   const STATUS_STYLE: Record<string, string> = {
-    DRAFT: "text-gray-600 bg-gray-100",
-    SENDING: "text-amber-700 bg-amber-100",
-    SENT: "text-green-700 bg-green-100",
-    FAILED: "text-red-700 bg-red-100",
+    DRAFT:   "text-slate-400 bg-slate-500/10 border-slate-500/20",
+    SENDING: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    SENT:    "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+    FAILED:  "text-rose-400 bg-rose-500/10 border-rose-500/20",
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[#0a0a0f] flex">
       <Sidebar email={session.user?.email ?? ""} />
-      <main className="flex-1 overflow-auto p-8">
-        <div className="max-w-5xl mx-auto space-y-6">
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-6xl mx-auto px-8 py-10 space-y-8">
+
+          {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
-              <p className="text-gray-500 text-sm mt-1">{campaigns.length} campaign{campaigns.length !== 1 ? "s" : ""} total</p>
+              <h1 className="text-2xl font-bold text-white tracking-tight">Campaigns</h1>
+              <p className="text-slate-500 text-sm mt-1">{campaigns.length} campaign{campaigns.length !== 1 ? "s" : ""} total</p>
             </div>
             <Link href="/dashboard/campaigns/new">
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/25 transition-all">
+              <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-indigo-900/40">
                 + New Campaign
               </button>
             </Link>
           </div>
 
           {campaigns.length === 0 ? (
-            <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
-              <div className="text-4xl mb-3">✉️</div>
-              <p className="text-gray-500">No campaigns yet.</p>
+            <div className="bg-white/[0.02] border border-dashed border-white/10 rounded-2xl p-16 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <p className="text-slate-400 font-medium mb-1">No campaigns yet</p>
+              <p className="text-slate-600 text-sm mb-5">Create your first campaign to start sending.</p>
               <Link href="/dashboard/campaigns/new">
-                <button className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-5 py-2 rounded-xl text-sm font-medium shadow-lg shadow-blue-500/25 hover:from-blue-700 hover:to-purple-700 transition-all">
-                  Create your first campaign →
+                <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-indigo-900/40 transition-all">
+                  Create campaign →
                 </button>
               </Link>
             </div>
           ) : (
-            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wider bg-gray-50">
-                    <th className="text-left px-5 py-3 font-semibold">Campaign</th>
-                    <th className="text-left px-5 py-3 font-semibold">Status</th>
-                    <th className="text-right px-5 py-3 font-semibold">Recipients</th>
-                    <th className="text-right px-5 py-3 font-semibold">Sent</th>
-                    <th className="text-right px-5 py-3 font-semibold">Opened</th>
-                    <th className="text-right px-5 py-3 font-semibold">Clicked</th>
+                  <tr className="border-b border-white/5">
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Campaign</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Recipients</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Sent</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Opened</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Clicked</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-white/[0.04]">
                   {campaigns.map((c: Campaign) => {
                     const sent = cnt(c.events, "SENT");
                     const opened = cnt(c.events, "OPENED");
                     const clicked = cnt(c.events, "CLICKED");
                     return (
-                      <tr key={c.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                        <td className="px-5 py-3">
-                          <Link href={`/dashboard/campaigns/${c.id}`} className="font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                      <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-5 py-4">
+                          <Link href={`/dashboard/campaigns/${c.id}`} className="font-medium text-white hover:text-indigo-300 transition-colors">
                             {c.name}
                           </Link>
-                          <div className="text-xs text-gray-400 mt-0.5">{c.subject}</div>
+                          <div className="text-xs text-slate-600 mt-0.5">{c.subject}</div>
                         </td>
-                        <td className="px-5 py-3">
-                          <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_STYLE[c.status]}`}>
+                        <td className="px-5 py-4">
+                          <span className={`text-xs px-2.5 py-1 rounded-full font-medium border ${STATUS_STYLE[c.status]}`}>
                             {c.status}
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-right text-gray-600">{c._count.recipients}</td>
-                        <td className="px-5 py-3 text-right text-gray-600">{sent}</td>
-                        <td className="px-5 py-3 text-right text-gray-600">
-                          {opened}{sent > 0 && <span className="text-gray-400 text-xs ml-1">({((opened / sent) * 100).toFixed(0)}%)</span>}
+                        <td className="px-5 py-4 text-right text-slate-400">{c._count.recipients}</td>
+                        <td className="px-5 py-4 text-right text-slate-400">{sent}</td>
+                        <td className="px-5 py-4 text-right text-slate-400">
+                          {opened}
+                          {sent > 0 && <span className="text-slate-600 text-xs ml-1">({((opened / sent) * 100).toFixed(0)}%)</span>}
                         </td>
-                        <td className="px-5 py-3 text-right text-gray-600">
-                          {clicked}{sent > 0 && <span className="text-gray-400 text-xs ml-1">({((clicked / sent) * 100).toFixed(0)}%)</span>}
+                        <td className="px-5 py-4 text-right text-slate-400">
+                          {clicked}
+                          {sent > 0 && <span className="text-slate-600 text-xs ml-1">({((clicked / sent) * 100).toFixed(0)}%)</span>}
                         </td>
                       </tr>
                     );

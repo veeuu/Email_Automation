@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 type Contact = {
   id: string;
@@ -13,6 +11,10 @@ type Contact = {
   company: string | null;
   tags: string | null;
 };
+
+const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all";
+const modalBase = "fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4";
+const modalCard = "w-full bg-[#13131a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl";
 
 export function ContactsClient({ initialContacts }: { initialContacts: Contact[] }) {
   const router = useRouter();
@@ -39,22 +41,19 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
   }
 
   async function handleImport() {
+    setLoading(true);
     const lines = csvText.split("\n").filter(Boolean);
     const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-    const rows = lines.slice(1);
-
-    const parsed = rows.map((row) => {
+    const rows = lines.slice(1).map((row) => {
       const vals = row.split(",").map((v) => v.trim());
       const obj: Record<string, string> = {};
       headers.forEach((h, i) => { obj[h] = vals[i] ?? ""; });
       return obj;
     });
-
-    setLoading(true);
     await fetch("/api/contacts/import", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contacts: parsed }),
+      body: JSON.stringify({ contacts: rows }),
     });
     router.refresh();
     setShowImport(false);
@@ -63,7 +62,6 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this contact?")) return;
     await fetch("/api/contacts", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -74,21 +72,22 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
-          <p className="text-gray-500 text-sm mt-1">{contacts.length} contact{contacts.length !== 1 ? "s" : ""} total</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Contacts</h1>
+          <p className="text-slate-500 text-sm mt-1">{contacts.length} contact{contacts.length !== 1 ? "s" : ""} total</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setShowImport(true)}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+            className="bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
           >
             Import CSV
           </button>
           <button
             onClick={() => setShowAdd(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/25 transition-all"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-indigo-900/40"
           >
             + Add Contact
           </button>
@@ -97,19 +96,28 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
 
       {/* Add modal */}
       {showAdd && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl">
-            <h2 className="text-lg font-bold text-gray-900">Add Contact</h2>
-            <Input placeholder="Email *" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="rounded-xl" />
-            <Input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="rounded-xl" />
-            <Input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="rounded-xl" />
-            <Input placeholder="Company" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className="rounded-xl" />
-            <Input placeholder="Tags (comma-separated)" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} className="rounded-xl" />
-            <div className="flex gap-3">
-              <button onClick={handleAdd} disabled={loading || !form.email} className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 rounded-xl font-medium disabled:opacity-50">
-                {loading ? "Adding..." : "Add"}
+        <div className={modalBase}>
+          <div className={`${modalCard} max-w-md`}>
+            <h2 className="text-lg font-bold text-white">Add Contact</h2>
+            <input placeholder="Email *" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} />
+            <input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
+            <input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputCls} />
+            <input placeholder="Company" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className={inputCls} />
+            <input placeholder="Tags (comma-separated)" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} className={inputCls} />
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={handleAdd}
+                disabled={loading || !form.email}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold transition-all"
+              >
+                {loading ? "Adding..." : "Add Contact"}
               </button>
-              <button onClick={() => setShowAdd(false)} className="px-4 py-2 rounded-xl text-gray-600 border border-gray-200">Cancel</button>
+              <button
+                onClick={() => setShowAdd(false)}
+                className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white border border-white/10 hover:bg-white/5 transition-all"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -117,59 +125,110 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
 
       {/* Import modal */}
       {showImport && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full space-y-4 shadow-xl">
-            <h2 className="text-lg font-bold text-gray-900">Import CSV</h2>
-            <p className="text-sm text-gray-500">Paste CSV with headers: email, name, phone, company, tags</p>
-            <Textarea
-              placeholder="email,name,phone,company,tags&#10;john@example.com,John Doe,555-1234,Acme Inc,vip"
+        <div className={modalBase}>
+          <div className={`${modalCard} max-w-2xl`}>
+            <h2 className="text-lg font-bold text-white">Import CSV</h2>
+            <p className="text-sm text-slate-400">First row must be headers: email, name, phone, company, tags</p>
+            <textarea
+              placeholder={"email,name,phone,company,tags\njohn@example.com,John Doe,,,newsletter"}
               rows={8}
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
-              className="font-mono text-sm rounded-xl"
+              className={`${inputCls} font-mono resize-none`}
             />
             <div className="flex gap-3">
-              <button onClick={handleImport} disabled={loading || !csvText} className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 rounded-xl font-medium disabled:opacity-50">
+              <button
+                onClick={handleImport}
+                disabled={loading || !csvText.trim()}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold transition-all"
+              >
                 {loading ? "Importing..." : "Import"}
               </button>
-              <button onClick={() => setShowImport(false)} className="px-4 py-2 rounded-xl text-gray-600 border border-gray-200">Cancel</button>
+              <button
+                onClick={() => setShowImport(false)}
+                className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white border border-white/10 hover:bg-white/5 transition-all"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Table */}
+      {/* Stats strip */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Total contacts", value: contacts.length, color: "text-indigo-400" },
+          { label: "With company", value: contacts.filter((c) => c.company).length, color: "text-violet-400" },
+          { label: "Tagged", value: contacts.filter((c) => c.tags).length, color: "text-emerald-400" },
+        ].map((s) => (
+          <div key={s.label} className="bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4">
+            <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
+            <div className="text-xs text-slate-500 mt-1">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Empty state */}
       {contacts.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
-          <div className="text-4xl mb-3">👥</div>
-          <p className="text-gray-500">No contacts yet.</p>
-          <button onClick={() => setShowAdd(true)} className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-5 py-2 rounded-xl text-sm font-medium shadow-lg shadow-blue-500/25">
-            Add your first contact
-          </button>
+        <div className="bg-[#0f0f17] border border-dashed border-white/10 rounded-2xl p-20 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-5">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-400">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <p className="text-white font-semibold text-base mb-1">No contacts yet</p>
+          <p className="text-slate-500 text-sm mb-6 max-w-xs mx-auto">Add contacts manually or import a CSV to get started.</p>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => setShowAdd(true)}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-indigo-900/40 transition-all"
+            >
+              + Add Contact
+            </button>
+            <button
+              onClick={() => setShowImport(true)}
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all"
+            >
+              Import CSV
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wider bg-gray-50">
-                <th className="text-left px-5 py-3 font-semibold">Email</th>
-                <th className="text-left px-5 py-3 font-semibold">Name</th>
-                <th className="text-left px-5 py-3 font-semibold">Phone</th>
-                <th className="text-left px-5 py-3 font-semibold">Company</th>
-                <th className="text-left px-5 py-3 font-semibold">Tags</th>
-                <th className="text-right px-5 py-3 font-semibold">Actions</th>
+              <tr className="border-b border-white/5">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Company</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tags</th>
+                <th className="px-5 py-3" />
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/[0.04]">
               {contacts.map((c) => (
-                <tr key={c.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3 font-mono text-gray-700">{c.email}</td>
-                  <td className="px-5 py-3 text-gray-600">{c.name ?? "—"}</td>
-                  <td className="px-5 py-3 text-gray-600">{c.phone ?? "—"}</td>
-                  <td className="px-5 py-3 text-gray-600">{c.company ?? "—"}</td>
-                  <td className="px-5 py-3 text-gray-600">{c.tags ?? "—"}</td>
-                  <td className="px-5 py-3 text-right">
-                    <button onClick={() => handleDelete(c.id)} className="text-red-500 hover:text-red-700 text-xs">Delete</button>
+                <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
+                  <td className="px-5 py-3.5 font-mono text-slate-300">{c.email}</td>
+                  <td className="px-5 py-3.5 text-slate-400">{c.name ?? <span className="text-slate-700">—</span>}</td>
+                  <td className="px-5 py-3.5 text-slate-400">{c.company ?? <span className="text-slate-700">—</span>}</td>
+                  <td className="px-5 py-3.5">
+                    {c.tags
+                      ? c.tags.split(",").map((t) => (
+                          <span key={t} className="inline-block mr-1 px-2 py-0.5 rounded-full text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                            {t.trim()}
+                          </span>
+                        ))
+                      : <span className="text-slate-700">—</span>}
+                  </td>
+                  <td className="px-5 py-3.5 text-right">
+                    <button
+                      onClick={() => handleDelete(c.id)}
+                      className="text-xs text-slate-600 hover:text-rose-400 transition-colors"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}

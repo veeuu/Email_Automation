@@ -17,71 +17,78 @@ export default async function AnalyticsPage() {
   type Ev = Campaign["events"][0];
   const cnt = (events: Ev[], type: string) => events.filter((e) => e.eventType === type).length;
 
-  const totalSent = campaigns.reduce((acc: number, c: Campaign) => acc + cnt(c.events, "SENT"), 0);
-  const totalOpened = campaigns.reduce((acc: number, c: Campaign) => acc + cnt(c.events, "OPENED"), 0);
+  const totalSent    = campaigns.reduce((acc: number, c: Campaign) => acc + cnt(c.events, "SENT"), 0);
+  const totalOpened  = campaigns.reduce((acc: number, c: Campaign) => acc + cnt(c.events, "OPENED"), 0);
   const totalClicked = campaigns.reduce((acc: number, c: Campaign) => acc + cnt(c.events, "CLICKED"), 0);
   const totalBounced = campaigns.reduce((acc: number, c: Campaign) => acc + cnt(c.events, "BOUNCED"), 0);
 
+  const STATS = [
+    { label: "Total Sent",    value: totalSent,    rate: null,                                                                          color: "text-sky-400",     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> },
+    { label: "Total Opened",  value: totalOpened,  rate: totalSent > 0 ? ((totalOpened  / totalSent) * 100).toFixed(1) + "%" : null,   color: "text-violet-400",  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> },
+    { label: "Total Clicked", value: totalClicked, rate: totalSent > 0 ? ((totalClicked / totalSent) * 100).toFixed(1) + "%" : null,   color: "text-emerald-400", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
+    { label: "Bounced",       value: totalBounced, rate: totalSent > 0 ? ((totalBounced / totalSent) * 100).toFixed(1) + "%" : null,   color: "text-rose-400",    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[#0a0a0f] flex">
       <Sidebar email={session.user?.email ?? ""} />
-      <main className="flex-1 overflow-auto p-8">
-        <div className="max-w-5xl mx-auto space-y-8">
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-6xl mx-auto px-8 py-10 space-y-8">
+
+          {/* Header */}
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-            <p className="text-gray-500 text-sm mt-1">Aggregate performance across all campaigns.</p>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Analytics</h1>
+            <p className="text-slate-500 text-sm mt-1">Aggregate performance across all campaigns.</p>
           </div>
 
+          {/* Summary stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: "Total Sent", value: totalSent, color: "from-blue-500 to-blue-600", rate: null },
-              { label: "Total Opened", value: totalOpened, color: "from-purple-500 to-purple-600", rate: totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) + "%" : null },
-              { label: "Total Clicked", value: totalClicked, color: "from-green-500 to-green-600", rate: totalSent > 0 ? ((totalClicked / totalSent) * 100).toFixed(1) + "%" : null },
-              { label: "Bounced", value: totalBounced, color: "from-red-500 to-red-600", rate: totalSent > 0 ? ((totalBounced / totalSent) * 100).toFixed(1) + "%" : null },
-            ].map((s) => (
-              <div key={s.label} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                <div className="text-xs text-gray-500 uppercase tracking-wider font-medium">{s.label}</div>
-                <div className={`text-2xl font-bold mt-2 bg-gradient-to-r ${s.color} bg-clip-text text-transparent`}>{s.value}</div>
-                {s.rate && <div className="text-xs text-gray-400 mt-0.5">{s.rate} rate</div>}
+            {STATS.map((s) => (
+              <div key={s.label} className="bg-white/[0.03] border border-white/5 rounded-2xl p-5">
+                <div className={`${s.color} mb-3`}>{s.icon}</div>
+                <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
+                <div className="text-xs font-medium text-slate-400 mt-1">{s.label}</div>
+                {s.rate && <div className="text-xs text-slate-600 mt-0.5">{s.rate} rate</div>}
               </div>
             ))}
           </div>
 
-          <div>
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Per campaign</h2>
+          {/* Per campaign table */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Per campaign</h2>
             {campaigns.length === 0 ? (
-              <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-gray-500 text-sm shadow-sm">
+              <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-10 text-center text-slate-500 text-sm">
                 No campaign data yet.
               </div>
             ) : (
-              <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 text-xs text-gray-500 uppercase tracking-wider bg-gray-50">
-                      <th className="text-left px-5 py-3 font-semibold">Campaign</th>
-                      <th className="text-right px-5 py-3 font-semibold">Sent</th>
-                      <th className="text-right px-5 py-3 font-semibold">Open rate</th>
-                      <th className="text-right px-5 py-3 font-semibold">Click rate</th>
-                      <th className="text-right px-5 py-3 font-semibold">Bounces</th>
+                    <tr className="border-b border-white/5">
+                      <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Campaign</th>
+                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Sent</th>
+                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Open rate</th>
+                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Click rate</th>
+                      <th className="text-right px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Bounces</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-white/[0.04]">
                     {campaigns.map((c: Campaign) => {
-                      const sent = cnt(c.events, "SENT");
-                      const opened = cnt(c.events, "OPENED");
+                      const sent    = cnt(c.events, "SENT");
+                      const opened  = cnt(c.events, "OPENED");
                       const clicked = cnt(c.events, "CLICKED");
                       const bounced = cnt(c.events, "BOUNCED");
                       return (
-                        <tr key={c.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                          <td className="px-5 py-3 font-medium text-gray-900">{c.name}</td>
-                          <td className="px-5 py-3 text-right text-gray-600">{sent}</td>
-                          <td className="px-5 py-3 text-right text-purple-600 font-medium">
+                        <tr key={c.id} className="hover:bg-white/[0.02] transition-colors">
+                          <td className="px-5 py-4 font-medium text-white">{c.name}</td>
+                          <td className="px-5 py-4 text-right text-slate-400">{sent}</td>
+                          <td className="px-5 py-4 text-right font-medium text-violet-400">
                             {sent > 0 ? ((opened / sent) * 100).toFixed(1) + "%" : "—"}
                           </td>
-                          <td className="px-5 py-3 text-right text-green-600 font-medium">
+                          <td className="px-5 py-4 text-right font-medium text-emerald-400">
                             {sent > 0 ? ((clicked / sent) * 100).toFixed(1) + "%" : "—"}
                           </td>
-                          <td className="px-5 py-3 text-right text-red-500">{bounced}</td>
+                          <td className="px-5 py-4 text-right text-rose-400">{bounced}</td>
                         </tr>
                       );
                     })}
@@ -90,6 +97,7 @@ export default async function AnalyticsPage() {
               </div>
             )}
           </div>
+
         </div>
       </main>
     </div>
