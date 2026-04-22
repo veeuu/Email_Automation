@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { Worker, Queue } from "bullmq";
 import { connection } from "../lib/queue";
 import { prisma } from "../lib/prisma";
