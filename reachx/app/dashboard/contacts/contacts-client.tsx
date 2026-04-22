@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ActivityPanel } from "./activity-panel";
 
-type Contact = { id: string; email: string; name: string | null; phone: string | null; company: string | null; tags: string | null };
+type Contact = { id: string; email: string; name: string | null; phone: string | null; company: string | null; tags: string | null; unsubscribed?: boolean };
 
 const inputCls = "w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all";
 const modalBase = "fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4";
@@ -23,6 +24,7 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
   const [enrollWorkflowId, setEnrollWorkflowId] = useState("");
   const [enrolling, setEnrolling] = useState(false);
   const [enrollResult, setEnrollResult] = useState<string | null>(null);
+  const [activityEmail, setActivityEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (showEnroll && workflows.length === 0) {
@@ -307,7 +309,7 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
+                <tr key={c.id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => setActivityEmail(c.email)}>
                   <td className="px-5 py-3.5">
                     <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} className="rounded border-slate-300" />
                   </td>
@@ -322,6 +324,9 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
                           </span>
                         ))
                       : <span className="text-slate-300">—</span>}
+                    {c.unsubscribed && (
+                      <span className="inline-block ml-1 px-2 py-0.5 rounded-full text-[11px] bg-rose-50 border border-rose-200 text-rose-500">unsub</span>
+                    )}
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <button onClick={() => handleDelete(c.id)} className="text-xs text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100">
@@ -339,6 +344,7 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
           )}
         </div>
       )}
+      {activityEmail && <ActivityPanel email={activityEmail} onClose={() => setActivityEmail(null)} />}
     </div>
   );
 }

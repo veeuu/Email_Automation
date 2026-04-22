@@ -8,6 +8,8 @@ import { EditPanel } from "./edit-panel";
 import { AddRecipients } from "./add-recipients";
 import { RecipientsList } from "./recipients-list";
 import { FollowUpPanel } from "./followup-panel";
+import { SchedulePanel } from "./schedule-panel";
+import { DeleteCampaignButton } from "./delete-button";
 
 export default async function CampaignDetailPage({
   params,
@@ -42,6 +44,7 @@ export default async function CampaignDetailPage({
   const opened  = cnt("OPENED");
   const clicked = cnt("CLICKED");
   const bounced = cnt("BOUNCED");
+  const unsubscribed = cnt("UNSUBSCRIBED");
 
   const STATUS_STYLE: Record<string, string> = {
     DRAFT:   "text-slate-500 bg-slate-100 border-slate-200",
@@ -64,6 +67,7 @@ export default async function CampaignDetailPage({
     { label: "Opened",     value: opened,  color: "text-violet-600",  sub: sent > 0 ? `${((opened  / sent) * 100).toFixed(1)}% rate` : null },
     { label: "Clicked",    value: clicked, color: "text-emerald-600", sub: sent > 0 ? `${((clicked / sent) * 100).toFixed(1)}% rate` : null },
     { label: "Bounced",    value: bounced, color: "text-rose-500",    sub: null },
+    { label: "Unsub",      value: unsubscribed, color: "text-slate-500", sub: null },
   ];
 
   return (
@@ -89,6 +93,7 @@ export default async function CampaignDetailPage({
               {campaign.status === "DRAFT" && (
                 <CampaignSendButton campaignId={campaign.id} recipientCount={campaign.recipients.length} />
               )}
+              <DeleteCampaignButton campaignId={campaign.id} campaignStatus={campaign.status} />
             </div>
           </div>
 
@@ -125,6 +130,12 @@ export default async function CampaignDetailPage({
             initialWorkflowId={followUpWorkflow?.id ?? null}
             initialWorkflowName={followUpWorkflow?.name ?? null}
             initialTrigger={campaignAny.followUpTrigger ?? null}
+          />
+
+          <SchedulePanel
+            campaignId={campaign.id}
+            campaignStatus={campaign.status}
+            initialScheduledAt={(campaignAny.scheduledAt as string) ?? null}
           />
 
         </div>

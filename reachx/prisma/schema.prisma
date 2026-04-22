@@ -59,18 +59,31 @@ model VerificationToken {
 }
 
 model Contact {
-  id        String   @id @default(cuid())
-  email     String
-  name      String?
-  phone     String?
-  company   String?
-  tags      String?
-  userId    String
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  email        String
+  name         String?
+  phone        String?
+  company      String?
+  tags         String?
+  userId       String
+  unsubscribed Boolean  @default(false)
+  bouncedAt    DateTime?
+  spamAt       DateTime?
+  createdAt    DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([email, userId])
+}
+
+model UnsubscribeToken {
+  id          String   @id @default(cuid())
+  token       String   @unique @default(cuid())
+  email       String
+  userId      String
+  campaignId  String?
+  createdAt   DateTime @default(now())
+  usedAt      DateTime?
 }
 
 model Campaign {
@@ -81,7 +94,8 @@ model Campaign {
   status              CampaignStatus @default(DRAFT)
   userId              String
   followUpWorkflowId  String?
-  followUpTrigger     String?  // "all" | "opened" | "not_opened" | "clicked" | "not_clicked"
+  followUpTrigger     String?
+  scheduledAt         DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -115,6 +129,7 @@ model EmailEvent {
 
 enum CampaignStatus {
   DRAFT
+  SCHEDULED
   SENDING
   SENT
   FAILED
@@ -133,6 +148,7 @@ enum EventType {
   CLICKED
   BOUNCED
   SPAM
+  UNSUBSCRIBED
 }
 
 // ─── Workflow Automation ───────────────────────────────────────────────────────

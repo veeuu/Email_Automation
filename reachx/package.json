@@ -9,7 +9,9 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "worker": "npx ts-node --project tsconfig.worker.json -r tsconfig-paths/register workers/emailWorker.ts",
+    "worker:workflow": "npx ts-node --project tsconfig.worker.json -r tsconfig-paths/register workers/workflowWorker.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

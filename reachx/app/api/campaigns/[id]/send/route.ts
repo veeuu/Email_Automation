@@ -28,10 +28,31 @@ export async function POST(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   let successCount = 0;
 
+  // Get unsubscribed emails for this user to skip them
+  const unsubscribed = await prisma.contact.findMany({
+    where: { userId: session.user.id, unsubscribed: true },
+    select: { email: true },
+  });
+  const unsubscribedEmails = new Set(unsubscribed.map((c) => c.email.toLowerCase()));
+
   for (const recipient of campaign.recipients) {
+    // Skip unsubscribed contacts
+    if (unsubscribedEmails.has(recipient.email.toLowerCase())) {
+      continue;
+    }
+
     try {
+      // Generate unsubscribe token for this recipient
+      const unsub = await prisma.unsubscribeToken.create({
+        data: { email: recipient.email, userId: session.user.id, campaignId: campaign.id },
+      });
+      const unsubLink = `${appUrl}/api/unsubscribe?token=${unsub.token}`;
+      const unsubFooter = `<div style="margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;text-align:center;font-size:12px;color:#94a3b8;">
+        Don't want to receive these emails? <a href="${unsubLink}" style="color:#6366f1;">Unsubscribe</a>
+      </div>`;
+
       const trackingPixel = `<img src="${appUrl}/api/track?rid=${recipient.id}&cid=${campaign.id}&type=open" width="1" height="1" style="display:none" />`;
-      const htmlWithTracking = campaign.content + trackingPixel;
+      const htmlWithTracking = campaign.content + trackingPixel + unsubFooter;
 
       await sendEmail({
         to: recipient.email,
