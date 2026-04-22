@@ -91,6 +91,52 @@ export const workflowWorker = new Worker(
         break;
       }
 
+      case "REMOVE_TAG": {
+        const tagsToRemove = ((cfg.tags as string[]) ?? []).map((t) => t.toLowerCase());
+        const contact = await prisma.contact.findFirst({
+          where: { email: enrollment.contactEmail, userId: enrollment.workflow.userId },
+        });
+        if (contact?.tags) {
+          const remaining = contact.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter((t) => !tagsToRemove.includes(t.toLowerCase()))
+            .join(", ");
+          await prisma.contact.update({ where: { id: contact.id }, data: { tags: remaining || null } });
+        }
+        await prisma.workflowEnrollmentEvent.create({
+          data: { enrollmentId, stepId: currentStep.id, eventType: "TAG_REMOVED", metadata: { tags: tagsToRemove } },
+        });
+        break;
+      }
+
+      case "GO_TO": {
+        const targetStepId = cfg.targetStepId as string;
+        if (!targetStepId) break;
+        // Loop guard: track visit count in metadata to prevent infinite loops
+        const visitKey = `goto_visits_${currentStep.id}`;
+        const existingEvents = await prisma.workflowEnrollmentEvent.count({
+          where: { enrollmentId, stepId: currentStep.id, eventType: "GOTO_JUMPED" },
+        });
+        const maxJumps = (cfg.maxJumps as number) ?? 3;
+        if (existingEvents >= maxJumps) {
+          // Max jumps reached — continue linearly instead
+          await prisma.workflowEnrollmentEvent.create({
+            data: { enrollmentId, stepId: currentStep.id, eventType: "GOTO_MAX_REACHED" },
+          });
+          break;
+        }
+        await prisma.workflowEnrollmentEvent.create({
+          data: { enrollmentId, stepId: currentStep.id, eventType: "GOTO_JUMPED", metadata: { targetStepId, jump: existingEvents + 1 } },
+        });
+        await prisma.workflowEnrollment.update({
+          where: { id: enrollmentId },
+          data: { currentStepId: targetStepId },
+        });
+        await workflowQueue.add("process-enrollment", { enrollmentId, workflowId: enrollment.workflowId });
+        return;
+      }
+
       case "END": {
         await prisma.workflowEnrollment.update({
           where: { id: enrollmentId },

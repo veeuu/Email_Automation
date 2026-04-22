@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { StepPanel } from "./step-panel";
 
-export type StepType = "TRIGGER" | "SEND_EMAIL" | "WAIT" | "IF_CONDITION" | "UPDATE_TAG" | "END";
+export type StepType = "TRIGGER" | "SEND_EMAIL" | "WAIT" | "IF_CONDITION" | "UPDATE_TAG" | "REMOVE_TAG" | "GO_TO" | "END";
 
 export interface WorkflowStep {
   id: string;
@@ -33,6 +33,8 @@ export const STEP_TYPES: { type: StepType; label: string; icon: string }[] = [
   { type: "WAIT",         label: "Wait",         icon: "⏳" },
   { type: "IF_CONDITION", label: "If Condition", icon: "⚡" },
   { type: "UPDATE_TAG",   label: "Update Tag",   icon: "🏷️" },
+  { type: "REMOVE_TAG",   label: "Remove Tag",   icon: "🗑️" },
+  { type: "GO_TO",        label: "Go To",        icon: "↩️" },
   { type: "END",          label: "End",          icon: "⏹" },
 ];
 
@@ -451,6 +453,7 @@ export function WorkflowBuilder({ workflow: initial }: { workflow: Workflow }) {
                 onClose={() => setSelectedId(null)}
                 onDelete={() => deleteStep(selectedStep.id)}
                 onDuplicate={() => duplicateStep(selectedStep.id)}
+                allSteps={steps}
               />
             )}
           </>
@@ -471,6 +474,8 @@ const STEP_STYLES: Record<string, { bg: string; border: string; accent: string; 
   WAIT:         { bg: "#fffbeb", border: "#fcd34d", accent: "#f59e0b", icon: "⏳" },
   IF_CONDITION: { bg: "#faf5ff", border: "#c4b5fd", accent: "#8b5cf6", icon: "⚡" },
   UPDATE_TAG:   { bg: "#f0fdf4", border: "#86efac", accent: "#22c55e", icon: "🏷️" },
+  REMOVE_TAG:   { bg: "#fff7ed", border: "#fdba74", accent: "#f97316", icon: "🗑️" },
+  GO_TO:        { bg: "#f0fdf4", border: "#6ee7b7", accent: "#10b981", icon: "↩️" },
   END:          { bg: "#fff1f2", border: "#fda4af", accent: "#f43f5e", icon: "⏹" },
 };
 
@@ -487,6 +492,8 @@ function stepSummary(step: WorkflowStep): string {
     case "WAIT":         return c.delayMinutes ? `Wait ${c.delayMinutes} min` : "Set delay";
     case "IF_CONDITION": return c.field ? `${c.field} ${c.operator} "${c.value}"` : "Set condition";
     case "UPDATE_TAG":   return c.tags ? `Add: ${(c.tags as string[]).join(", ")}` : "Set tags";
+    case "REMOVE_TAG":   return c.tags ? `Remove: ${(c.tags as string[]).join(", ")}` : "Set tags";
+    case "GO_TO":        return c.targetStepId ? `Jump → ${(c.targetStepId as string).slice(0, 8)}…` : "Set target step";
     case "END":          return "Workflow ends";
     default:             return "";
   }
@@ -543,6 +550,9 @@ function FlowNode({ step, selected, onSelect, onDragStart, onDelete, onDuplicate
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: style.accent }}>{STEP_LABELS[step.type]}</div>
           <div style={{ fontSize: 11, color: "#64748b", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{stepSummary(step)}</div>
           {step.notes && <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>📝 {step.notes}</div>}
+          {step.type === "GO_TO" && (
+            <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 2, fontFamily: "monospace" }}>ID: {step.id}</div>
+          )}
         </div>
 
         {/* Action buttons */}

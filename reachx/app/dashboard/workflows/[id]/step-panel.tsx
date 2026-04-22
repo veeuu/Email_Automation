@@ -9,7 +9,8 @@ const TRIGGER_LABELS: Record<string, string> = {
 
 const STEP_TYPE_LABEL: Record<string, string> = {
   TRIGGER: "Trigger", SEND_EMAIL: "Send Email", WAIT: "Wait",
-  IF_CONDITION: "If Condition", UPDATE_TAG: "Update Tag", END: "End",
+  IF_CONDITION: "If Condition", UPDATE_TAG: "Update Tag",
+  REMOVE_TAG: "Remove Tag", GO_TO: "Go To", END: "End",
 };
 
 const INPUT = "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white";
@@ -23,12 +24,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function StepPanel({ step, onChange, onClose, onDelete, onDuplicate }: {
+export function StepPanel({ step, onChange, onClose, onDelete, onDuplicate, allSteps }: {
   step: WorkflowStep;
   onChange: (patch: Partial<WorkflowStep>) => void;
   onClose: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  allSteps?: WorkflowStep[];
 }) {
   const cfg = step.config;
 
@@ -138,6 +140,44 @@ export function StepPanel({ step, onChange, onClose, onDelete, onDuplicate }: {
               onChange={(e) => set("tags", e.target.value.split(",").map((t) => t.trim()).filter(Boolean))}
               placeholder="e.g. vip, customer" className={INPUT} />
           </Field>
+        )}
+
+        {step.type === "REMOVE_TAG" && (
+          <Field label="Tags to remove (comma-separated)">
+            <input
+              value={Array.isArray(cfg.tags) ? (cfg.tags as string[]).join(", ") : ((cfg.tags as string) ?? "")}
+              onChange={(e) => set("tags", e.target.value.split(",").map((t) => t.trim()).filter(Boolean))}
+              placeholder="e.g. lead, trial" className={INPUT} />
+            <p className="text-[11px] text-slate-400 mt-1">These tags will be stripped from the contact.</p>
+          </Field>
+        )}
+
+        {step.type === "GO_TO" && (
+          <>
+            <Field label="Jump to step">
+              <select
+                value={(cfg.targetStepId as string) ?? ""}
+                onChange={(e) => set("targetStepId", e.target.value)}
+                className={INPUT}
+              >
+                <option value="">— Select a step —</option>
+                {(allSteps ?? []).filter((s) => s.id !== step.id).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.type.replace(/_/g, " ")} — {s.id.slice(0, 8)}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-400 mt-1">The workflow will jump to this step when executed.</p>
+            </Field>
+            <Field label="Max jumps (loop guard)">
+              <input
+                type="number" min={1} max={10}
+                value={(cfg.maxJumps as number) ?? 3}
+                onChange={(e) => set("maxJumps", parseInt(e.target.value) || 3)}
+                className={INPUT} />
+              <p className="text-[11px] text-slate-400 mt-1">Stops looping after this many jumps to prevent infinite loops.</p>
+            </Field>
+          </>
         )}
 
         {step.type === "END" && (

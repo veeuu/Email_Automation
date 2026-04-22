@@ -74,14 +74,16 @@ model Contact {
 }
 
 model Campaign {
-  id          String   @id @default(cuid())
-  name        String
-  subject     String
-  content     String   @db.Text
-  status      CampaignStatus @default(DRAFT)
-  userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  name                String
+  subject             String
+  content             String   @db.Text
+  status              CampaignStatus @default(DRAFT)
+  userId              String
+  followUpWorkflowId  String?
+  followUpTrigger     String?  // "all" | "opened" | "not_opened" | "clicked" | "not_clicked"
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   user        User       @relation(fields: [userId], references: [id])
   recipients  Recipient[]
@@ -228,6 +230,8 @@ enum StepType {
   WAIT
   IF_CONDITION
   UPDATE_TAG
+  REMOVE_TAG
+  GO_TO
   END
 }
 

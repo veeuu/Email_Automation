@@ -7,6 +7,7 @@ import { CampaignSendButton } from "./send-button";
 import { EditPanel } from "./edit-panel";
 import { AddRecipients } from "./add-recipients";
 import { RecipientsList } from "./recipients-list";
+import { FollowUpPanel } from "./followup-panel";
 
 export default async function CampaignDetailPage({
   params,
@@ -27,6 +28,12 @@ export default async function CampaignDetailPage({
   });
 
   if (!campaign) notFound();
+
+  // Fetch linked follow-up workflow name if exists
+  const campaignAny = campaign as unknown as Record<string, string>;
+  const followUpWorkflow = campaignAny.followUpWorkflowId
+    ? await prisma.workflow.findUnique({ where: { id: campaignAny.followUpWorkflowId }, select: { id: true, name: true } })
+    : null;
 
   type Ev = (typeof campaign)["events"][0];
   const cnt = (type: string) => campaign.events.filter((e: Ev) => e.eventType === type).length;
@@ -110,6 +117,15 @@ export default async function CampaignDetailPage({
             </div>
             <RecipientsList campaignId={campaign.id} recipients={recipientsWithEvents} />
           </div>
+
+          <FollowUpPanel
+            campaignId={campaign.id}
+            campaignName={campaign.name}
+            campaignStatus={campaign.status}
+            initialWorkflowId={followUpWorkflow?.id ?? null}
+            initialWorkflowName={followUpWorkflow?.name ?? null}
+            initialTrigger={campaignAny.followUpTrigger ?? null}
+          />
 
         </div>
       </main>
