@@ -10,6 +10,7 @@ import { RecipientsList } from "./recipients-list";
 import { FollowUpPanel } from "./followup-panel";
 import { SchedulePanel } from "./schedule-panel";
 import { DeleteCampaignButton } from "./delete-button";
+import { DuplicateCampaignButton } from "./duplicate-button";
 
 export default async function CampaignDetailPage({
   params,
@@ -90,6 +91,7 @@ export default async function CampaignDetailPage({
               </span>
               <AddRecipients campaignId={campaign.id} />
               <EditPanel campaignId={campaign.id} name={campaign.name} subject={campaign.subject} content={campaign.content} />
+              <DuplicateCampaignButton campaignId={campaign.id} />
               {campaign.status === "DRAFT" && (
                 <CampaignSendButton campaignId={campaign.id} recipientCount={campaign.recipients.length} />
               )}

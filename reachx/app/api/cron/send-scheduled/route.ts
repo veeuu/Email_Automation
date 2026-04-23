@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/brevo";
+import { rewriteLinksForTracking } from "@/lib/rewriteLinks";
 
 // Called by Railway cron every minute
 // Secure with a shared secret so only Railway can trigger it
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
         await sendEmail({
           to: recipient.email,
           subject: campaign.subject,
-          htmlContent: campaign.content + trackingPixel + unsubFooter,
+          htmlContent: rewriteLinksForTracking(campaign.content, recipient.id, campaign.id, appUrl) + trackingPixel + unsubFooter,
         });
 
         await prisma.emailEvent.create({

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { sendEmail } from "@/lib/brevo";
 import { workflowQueue } from "@/lib/workflowQueue";
+import { rewriteLinksForTracking } from "@/lib/rewriteLinks";
 
 export async function POST(
   _req: NextRequest,
@@ -56,7 +57,7 @@ export async function POST(
       </div>`;
 
       const trackingPixel = `<img src="${appUrl}/api/track?rid=${recipient.id}&cid=${campaign.id}&type=open" width="1" height="1" style="display:none" />`;
-      const htmlWithTracking = campaign.content + trackingPixel + unsubFooter;
+      const htmlWithTracking = rewriteLinksForTracking(campaign.content, recipient.id, campaign.id, appUrl) + trackingPixel + unsubFooter;
 
       await sendEmail({
         to: recipient.email,

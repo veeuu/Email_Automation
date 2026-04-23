@@ -14,6 +14,8 @@ const STEPS = [
   { n: 3, label: "Recipients" },
 ];
 
+type Segment = { id: string; name: string; filterType: string; filterValue: string | null };
+
 export default function NewCampaignPage() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -22,20 +24,45 @@ export default function NewCampaignPage() {
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [recipientInput, setRecipientInput] = useState("");
+  const [recipientMode, setRecipientMode] = useState<"manual" | "segment">("manual");
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const [selectedSegmentId, setSelectedSegmentId] = useState("");
+  const [segmentPreview, setSegmentPreview] = useState<{ count: number; emails: string[] } | null>(null);
+  const [segmentLoading, setSegmentLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const parsedEmails = recipientInput.split(/[\n,]+/).map((e) => e.trim()).filter(Boolean);
-  const canNext = step === 1 ? (name.trim() && subject.trim()) : step === 2 ? content.trim() : parsedEmails.length > 0;
+  const recipientCount = recipientMode === "segment" ? (segmentPreview?.count ?? 0) : parsedEmails.length;
+  const canNext = step === 1 ? (name.trim() && subject.trim()) : step === 2 ? content.trim() : recipientCount > 0;
+
+  async function loadSegments() {
+    if (segments.length > 0) return;
+    const res = await fetch("/api/segments");
+    const data = await res.json();
+    setSegments(data);
+  }
+
+  async function previewSegment(segId: string) {
+    if (!segId) { setSegmentPreview(null); return; }
+    setSegmentLoading(true);
+    const res = await fetch(`/api/segments/${segId}/contacts`);
+    const data = await res.json();
+    setSegmentPreview({ count: data.count, emails: data.contacts.map((c: { email: string }) => c.email) });
+    setSegmentLoading(false);
+  }
 
   async function handleSubmit() {
-    if (!parsedEmails.length) { setError("Add at least one recipient"); return; }
+    const emails = recipientMode === "segment"
+      ? (segmentPreview?.emails ?? [])
+      : parsedEmails;
+    if (!emails.length) { setError("Add at least one recipient"); return; }
     setLoading(true);
     setError("");
     const res = await fetch("/api/campaigns", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, subject, content, recipients: parsedEmails }),
+      body: JSON.stringify({ name, subject, content, recipients: emails }),
     });
     const data = await res.json();
     if (!res.ok) { setError(data.error ?? "Failed to create campaign"); setLoading(false); }
@@ -137,7 +164,7 @@ export default function NewCampaignPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-700">Email body</label>
-                  <p className="text-xs text-slate-400">HTML or plain text</p>
+                  <p className="text-xs text-slate-400">HTML or plain text. Use {"{{name}}"}, {"{{email}}"}, {"{{company}}"} as placeholders.</p>
                   <textarea
                     placeholder={"<p>Hello {{name}},</p>\n<p>Here's your update...</p>"}
                     value={content}
@@ -146,14 +173,6 @@ export default function NewCampaignPage() {
                     className={`${inputCls} font-mono resize-none`}
                   />
                 </div>
-                {content && (
-                  <div className="flex items-center gap-2 text-xs text-emerald-600">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    Content saved
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -163,36 +182,83 @@ export default function NewCampaignPage() {
             <div className="space-y-6">
               <div>
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight">Recipients</h1>
-                <p className="text-slate-400 text-sm mt-1">Add the email addresses you want to send to.</p>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Email addresses</label>
-                  <p className="text-xs text-slate-400">One per line or comma-separated</p>
-                  <textarea
-                    placeholder={"john@example.com\njane@company.com"}
-                    value={recipientInput}
-                    onChange={(e) => setRecipientInput(e.target.value)}
-                    rows={8}
-                    className={`${inputCls} font-mono resize-none`}
-                  />
-                </div>
-                {parsedEmails.length > 0 && (
-                  <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-500 shrink-0">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                    </svg>
-                    <span className="text-sm font-medium text-indigo-700">{parsedEmails.length} recipient{parsedEmails.length !== 1 ? "s" : ""} detected</span>
-                  </div>
-                )}
+                <p className="text-slate-400 text-sm mt-1">Paste emails manually or use a saved segment.</p>
               </div>
 
+              {/* Mode toggle */}
+              <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 w-fit">
+                {(["manual", "segment"] as const).map((m) => (
+                  <button key={m} onClick={() => { setRecipientMode(m); if (m === "segment") loadSegments(); }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${recipientMode === m ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                    {m === "manual" ? "Manual" : "Use Segment"}
+                  </button>
+                ))}
+              </div>
+
+              {recipientMode === "manual" ? (
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-700">Email addresses</label>
+                    <p className="text-xs text-slate-400">One per line or comma-separated</p>
+                    <textarea
+                      placeholder={"john@example.com\njane@company.com"}
+                      value={recipientInput}
+                      onChange={(e) => setRecipientInput(e.target.value)}
+                      rows={8}
+                      className={`${inputCls} font-mono resize-none`}
+                    />
+                  </div>
+                  {parsedEmails.length > 0 && (
+                    <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+                      <span className="text-sm font-medium text-indigo-700">{parsedEmails.length} recipient{parsedEmails.length !== 1 ? "s" : ""} detected</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+                  {segments.length === 0 ? (
+                    <div className="text-center py-6 space-y-2">
+                      <p className="text-slate-500 text-sm">No segments yet.</p>
+                      <Link href="/dashboard/contacts?tab=segments" className="text-indigo-600 text-sm hover:underline">
+                        Create a segment in Contacts →
+                      </Link>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        {segments.map((seg) => (
+                          <button key={seg.id}
+                            onClick={() => { setSelectedSegmentId(seg.id); previewSegment(seg.id); }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${selectedSegmentId === seg.id ? "border-indigo-300 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}>
+                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${selectedSegmentId === seg.id ? "border-indigo-600" : "border-slate-300"}`}>
+                              {selectedSegmentId === seg.id && <div className="w-2 h-2 rounded-full bg-indigo-600" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-slate-800">{seg.name}</div>
+                              <div className="text-xs text-slate-400 capitalize">{seg.filterType}{seg.filterValue ? `: ${seg.filterValue}` : ""}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      {segmentLoading && <p className="text-xs text-slate-400">Loading preview...</p>}
+                      {segmentPreview && !segmentLoading && (
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+                          <p className="text-sm font-medium text-indigo-700">{segmentPreview.count} matching contact{segmentPreview.count !== 1 ? "s" : ""}</p>
+                          <p className="text-xs text-indigo-400 mt-0.5">Unsubscribed contacts are automatically excluded.</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Summary */}
               <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-3">
                 <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Campaign summary</p>
                 {[
                   { label: "Name",       value: name },
                   { label: "Subject",    value: subject },
-                  { label: "Recipients", value: `${parsedEmails.length} address${parsedEmails.length !== 1 ? "es" : ""}` },
+                  { label: "Recipients", value: recipientCount > 0 ? `${recipientCount} address${recipientCount !== 1 ? "es" : ""}` : "None selected" },
                 ].map((row) => (
                   <div key={row.label} className="flex items-center justify-between text-sm">
                     <span className="text-slate-400">{row.label}</span>

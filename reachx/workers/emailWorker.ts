@@ -3,6 +3,7 @@ import { Worker } from "bullmq";
 import { connection } from "../lib/queue";
 import { sendEmail } from "../lib/brevo";
 import { prisma } from "../lib/prisma";
+import { rewriteLinksForTracking } from "../lib/rewriteLinks";
 
 export const emailWorker = new Worker(
   "email-send",
@@ -43,7 +44,7 @@ export const emailWorker = new Worker(
           await sendEmail({
             to: recipient.email,
             subject: campaign.subject,
-            htmlContent: campaign.content + trackingPixel + unsubFooter,
+            htmlContent: rewriteLinksForTracking(campaign.content, recipient.id, campaignId, appUrl) + trackingPixel + unsubFooter,
           });
           await prisma.emailEvent.create({
             data: { eventType: "SENT", campaignId, recipientId: recipient.id },

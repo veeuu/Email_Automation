@@ -21,6 +21,7 @@ model User {
   campaigns     Campaign[]
   contacts      Contact[]
   workflows     Workflow[]
+  segments      Segment[]
 }
 
 model Account {
@@ -74,6 +75,17 @@ model Contact {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([email, userId])
+}
+
+model Segment {
+  id          String   @id @default(cuid())
+  name        String
+  userId      String
+  filterType  String   // "tag" | "status" | "date"
+  filterValue String?  // tag name, status value, or date range
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model UnsubscribeToken {
