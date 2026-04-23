@@ -71,6 +71,8 @@ export async function POST(req: NextRequest) {
           to: recipient.email,
           subject: campaign.subject,
           htmlContent: rewriteLinksForTracking(campaign.content, recipient.id, campaign.id, appUrl) + trackingPixel + unsubFooter,
+          fromName: campaign.fromName ?? undefined,
+          replyTo: campaign.replyTo ?? undefined,
         });
 
         await prisma.emailEvent.create({

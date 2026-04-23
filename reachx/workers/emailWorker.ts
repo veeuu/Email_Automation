@@ -45,6 +45,8 @@ export const emailWorker = new Worker(
             to: recipient.email,
             subject: campaign.subject,
             htmlContent: rewriteLinksForTracking(campaign.content, recipient.id, campaignId, appUrl) + trackingPixel + unsubFooter,
+            fromName: campaign.fromName ?? undefined,
+            replyTo: campaign.replyTo ?? undefined,
           });
           await prisma.emailEvent.create({
             data: { eventType: "SENT", campaignId, recipientId: recipient.id },

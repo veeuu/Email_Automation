@@ -63,6 +63,8 @@ export async function POST(
         to: recipient.email,
         subject: campaign.subject,
         htmlContent: htmlWithTracking,
+        fromName: (campaign as unknown as Record<string, string | null>).fromName ?? undefined,
+        replyTo: (campaign as unknown as Record<string, string | null>).replyTo ?? undefined,
       });
 
       await prisma.emailEvent.create({

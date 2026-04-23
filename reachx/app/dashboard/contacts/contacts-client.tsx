@@ -25,6 +25,9 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
   const [enrolling, setEnrolling] = useState(false);
   const [enrollResult, setEnrollResult] = useState<string | null>(null);
   const [activityEmail, setActivityEmail] = useState<string | null>(null);
+  const [showBulkTag, setShowBulkTag] = useState(false);
+  const [bulkTag, setBulkTag] = useState("");
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   useEffect(() => {
     if (showEnroll && workflows.length === 0) {
@@ -102,6 +105,34 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
     setContacts(contacts.filter((c) => c.id !== id));
   }
 
+  async function handleBulkDelete() {
+    if (!confirm(`Delete ${selected.size} contact${selected.size !== 1 ? "s" : ""}? This cannot be undone.`)) return;
+    setBulkLoading(true);
+    await fetch("/api/contacts/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", ids: Array.from(selected) }),
+    });
+    setContacts(contacts.filter((c) => !selected.has(c.id)));
+    setSelected(new Set());
+    setBulkLoading(false);
+  }
+
+  async function handleBulkTag(action: "tag" | "untag") {
+    if (!bulkTag.trim()) return;
+    setBulkLoading(true);
+    await fetch("/api/contacts/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ids: Array.from(selected), tag: bulkTag.trim() }),
+    });
+    setBulkLoading(false);
+    setShowBulkTag(false);
+    setBulkTag("");
+    setSelected(new Set());
+    router.refresh();
+  }
+
   const ModalClose = ({ onClose }: { onClose: () => void }) => (
     <button onClick={onClose} className="text-slate-400 hover:text-slate-700 transition-colors">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -121,13 +152,29 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
         </div>
         <div className="flex items-center gap-2">
           {selected.size > 0 && (
-            <button onClick={() => setShowEnroll(true)}
-              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
-              </svg>
-              Enroll {selected.size} in Workflow
-            </button>
+            <>
+              <button onClick={() => setShowEnroll(true)}
+                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+                </svg>
+                Enroll {selected.size} in Workflow
+              </button>
+              <button onClick={() => setShowBulkTag(true)}
+                className="flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-800 px-4 py-2.5 rounded-xl text-sm font-medium transition-all">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+                </svg>
+                Tag
+              </button>
+              <button onClick={handleBulkDelete} disabled={bulkLoading}
+                className="flex items-center gap-2 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-500 hover:text-rose-600 px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                </svg>
+                Delete {selected.size}
+              </button>
+            </>
           )}
           <button onClick={() => setShowImport(true)} className="flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-800 px-4 py-2.5 rounded-xl text-sm font-medium transition-all">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -135,6 +182,12 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
             </svg>
             Import CSV
           </button>
+          <a href="/api/contacts/export" download className="flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-800 px-4 py-2.5 rounded-xl text-sm font-medium transition-all">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export CSV
+          </a>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:-translate-y-px">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -231,6 +284,35 @@ export function ContactsClient({ initialContacts }: { initialContacts: Contact[]
               </button>
               <button onClick={() => setShowEnroll(false)} className="px-4 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-800 border border-slate-200 hover:bg-slate-50 transition-all">
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk tag modal */}
+      {showBulkTag && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-slate-900">Tag {selected.size} Contact{selected.size !== 1 ? "s" : ""}</h2>
+              <ModalClose onClose={() => setShowBulkTag(false)} />
+            </div>
+            <input
+              placeholder="Tag name (e.g. customer)"
+              value={bulkTag}
+              onChange={(e) => setBulkTag(e.target.value)}
+              className={inputCls}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button onClick={() => handleBulkTag("tag")} disabled={bulkLoading || !bulkTag.trim()}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-2.5 rounded-xl text-sm font-semibold transition-all">
+                {bulkLoading ? "Applying..." : "Add Tag"}
+              </button>
+              <button onClick={() => handleBulkTag("untag")} disabled={bulkLoading || !bulkTag.trim()}
+                className="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 disabled:opacity-50 py-2.5 rounded-xl text-sm font-medium transition-all">
+                Remove Tag
               </button>
             </div>
           </div>

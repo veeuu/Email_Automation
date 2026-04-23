@@ -8,6 +8,7 @@ export interface SendEmailOptions {
   htmlContent: string;
   fromName?: string;
   fromEmail?: string;
+  replyTo?: string;
 }
 
 export async function sendEmail(options: SendEmailOptions) {
@@ -19,5 +20,6 @@ export async function sendEmail(options: SendEmailOptions) {
       name: options.fromName ?? process.env.BREVO_SENDER_NAME ?? "ReachX",
       email: options.fromEmail ?? process.env.BREVO_SENDER_EMAIL!,
     },
+    ...(options.replyTo ? { replyTo: { email: options.replyTo } } : {}),
   });
 }

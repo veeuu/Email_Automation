@@ -103,6 +103,8 @@ model Campaign {
   name                String
   subject             String
   content             String   @db.Text
+  fromName            String?
+  replyTo             String?
   status              CampaignStatus @default(DRAFT)
   userId              String
   followUpWorkflowId  String?

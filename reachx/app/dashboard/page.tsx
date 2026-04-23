@@ -15,6 +15,16 @@ export default async function DashboardPage() {
     take: 5,
   });
 
+  // Workflow stats
+  const [wfTotal, wfActive, wfEnrollActive, wfEnrollCompleted] = await Promise.all([
+    prisma.workflow.count({ where: { userId: session.user.id, archived: false } }),
+    prisma.workflow.count({ where: { userId: session.user.id, status: "ACTIVE", archived: false } }),
+    prisma.workflowEnrollment.count({ where: { workflow: { userId: session.user.id }, status: "ACTIVE" } }),
+    prisma.workflowEnrollment.count({ where: { workflow: { userId: session.user.id }, status: "COMPLETED" } }),
+  ]);
+  const totalEnrollments = wfEnrollActive + wfEnrollCompleted;
+  const completionRate = totalEnrollments > 0 ? Math.round((wfEnrollCompleted / totalEnrollments) * 100) : null;
+
   type Campaign = (typeof campaigns)[0];
   type Ev = Campaign["events"][0];
   const cnt = (events: Ev[], type: string) =>
@@ -101,6 +111,31 @@ export default async function DashboardPage() {
               </Link>
             ))}
           </div>
+
+          {/* Workflow stats widget */}
+          {wfTotal > 0 && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 hover:border-slate-300 hover:shadow-sm transition-all">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Automation</p>
+                <Link href="/dashboard/workflows" className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors">
+                  View all →
+                </Link>
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { label: "Workflows",  value: wfTotal,          color: "text-slate-800" },
+                  { label: "Active",     value: wfActive,         color: "text-emerald-600" },
+                  { label: "Enrolled",   value: wfEnrollActive,   color: "text-sky-600" },
+                  { label: "Completion", value: completionRate != null ? `${completionRate}%` : "—", color: "text-violet-600" },
+                ].map((s) => (
+                  <div key={s.label} className="text-center">
+                    <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Recent campaigns */}
           <div className="space-y-3">

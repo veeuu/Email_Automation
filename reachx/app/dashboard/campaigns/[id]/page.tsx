@@ -90,7 +90,7 @@ export default async function CampaignDetailPage({
                 {campaign.status}
               </span>
               <AddRecipients campaignId={campaign.id} />
-              <EditPanel campaignId={campaign.id} name={campaign.name} subject={campaign.subject} content={campaign.content} />
+              <EditPanel campaignId={campaign.id} name={campaign.name} subject={campaign.subject} content={campaign.content} fromName={(campaign as unknown as Record<string,string>).fromName ?? null} replyTo={(campaign as unknown as Record<string,string>).replyTo ?? null} />
               <DuplicateCampaignButton campaignId={campaign.id} />
               {campaign.status === "DRAFT" && (
                 <CampaignSendButton campaignId={campaign.id} recipientCount={campaign.recipients.length} />

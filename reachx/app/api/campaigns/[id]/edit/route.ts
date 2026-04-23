@@ -10,7 +10,7 @@ export async function PATCH(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { name, subject, content } = await req.json();
+  const { name, subject, content, fromName, replyTo } = await req.json();
 
   const campaign = await prisma.campaign.findFirst({
     where: { id, userId: session.user.id },
@@ -22,7 +22,13 @@ export async function PATCH(
 
   const updated = await prisma.campaign.update({
     where: { id },
-    data: { name, subject, content },
+    data: {
+      name,
+      subject,
+      content,
+      ...(fromName !== undefined && { fromName: fromName || null }),
+      ...(replyTo !== undefined && { replyTo: replyTo || null }),
+    },
   });
 
   return NextResponse.json(updated);
