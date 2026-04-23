@@ -21,6 +21,16 @@ export const emailWorker = new Worker(
 
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
+      // Load user's sender profile for fallback
+      const user = await prisma.user.findUnique({
+        where: { id: campaign.userId },
+        select: { name: true },
+      });
+      const userAny = user as unknown as Record<string, string | null>;
+      const campaignAny = campaign as unknown as Record<string, string | null>;
+      const resolvedFromName = campaignAny.fromName ?? userAny.senderName ?? undefined;
+      const resolvedReplyTo  = campaignAny.replyTo  ?? userAny.replyTo   ?? undefined;
+
       const unsubscribed = await prisma.contact.findMany({
         where: { userId: campaign.userId, unsubscribed: true },
         select: { email: true },
@@ -45,8 +55,8 @@ export const emailWorker = new Worker(
             to: recipient.email,
             subject: campaign.subject,
             htmlContent: rewriteLinksForTracking(campaign.content, recipient.id, campaignId, appUrl) + trackingPixel + unsubFooter,
-            fromName: campaign.fromName ?? undefined,
-            replyTo: campaign.replyTo ?? undefined,
+            fromName: resolvedFromName,
+            replyTo: resolvedReplyTo,
           });
           await prisma.emailEvent.create({
             data: { eventType: "SENT", campaignId, recipientId: recipient.id },

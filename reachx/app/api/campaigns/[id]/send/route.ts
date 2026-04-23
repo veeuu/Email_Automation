@@ -29,6 +29,16 @@ export async function POST(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   let successCount = 0;
 
+  // Load user's sender profile for fallback
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { name: true },
+  });
+  const userAny = user as unknown as Record<string, string | null>;
+  const campaignAny = campaign as unknown as Record<string, string | null>;
+  const resolvedFromName = campaignAny.fromName ?? userAny.senderName ?? undefined;
+  const resolvedReplyTo  = campaignAny.replyTo  ?? userAny.replyTo   ?? undefined;
+
   // Get unsubscribed emails for this user to skip them
   const unsubscribed = await prisma.contact.findMany({
     where: { userId: session.user.id, unsubscribed: true },
@@ -63,8 +73,8 @@ export async function POST(
         to: recipient.email,
         subject: campaign.subject,
         htmlContent: htmlWithTracking,
-        fromName: (campaign as unknown as Record<string, string | null>).fromName ?? undefined,
-        replyTo: (campaign as unknown as Record<string, string | null>).replyTo ?? undefined,
+        fromName: resolvedFromName,
+        replyTo: resolvedReplyTo,
       });
 
       await prisma.emailEvent.create({

@@ -37,6 +37,15 @@ export async function POST(req: NextRequest) {
       data: { status: "SENDING" },
     });
 
+    // Load user's sender profile for fallback
+    const user = await prisma.user.findUnique({
+      where: { id: campaign.userId },
+      select: { senderName: true, replyTo: true },
+    });
+    const campaignAny = campaign as unknown as Record<string, string | null>;
+    const resolvedFromName = campaignAny.fromName ?? user?.senderName ?? undefined;
+    const resolvedReplyTo  = campaignAny.replyTo  ?? user?.replyTo  ?? undefined;
+
     const unsubscribed = await prisma.contact.findMany({
       where: { userId: campaign.userId, unsubscribed: true },
       select: { email: true },
@@ -71,8 +80,8 @@ export async function POST(req: NextRequest) {
           to: recipient.email,
           subject: campaign.subject,
           htmlContent: rewriteLinksForTracking(campaign.content, recipient.id, campaign.id, appUrl) + trackingPixel + unsubFooter,
-          fromName: campaign.fromName ?? undefined,
-          replyTo: campaign.replyTo ?? undefined,
+          fromName: resolvedFromName,
+          replyTo: resolvedReplyTo,
         });
 
         await prisma.emailEvent.create({
