@@ -57,6 +57,7 @@ export function SchedulePanel({
           </span>
         )}
       </div>
+
       <div className="p-6 space-y-4">
         {isScheduled ? (
           <div className="flex items-center gap-4">
@@ -71,7 +72,7 @@ export function SchedulePanel({
             </div>
             <button onClick={cancelSchedule} disabled={cancelling}
               className="text-sm text-rose-500 hover:text-rose-700 font-medium border border-rose-200 hover:bg-rose-50 px-4 py-2.5 rounded-xl transition-all disabled:opacity-50">
-              {cancelling ? "Cancelling..." : "Cancel schedule"}
+              {cancelling ? "Cancelling..." : "Cancel"}
             </button>
           </div>
         ) : (
@@ -93,7 +94,6 @@ export function SchedulePanel({
           </div>
         )}
         {error && <p className="text-sm text-rose-500">{error}</p>}
-        <p className="text-xs text-slate-400">Scheduled sends use your server timezone. The campaign will send automatically at the specified time.</p>
       </div>
     </div>
   );
