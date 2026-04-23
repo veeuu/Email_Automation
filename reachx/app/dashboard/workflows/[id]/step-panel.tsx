@@ -75,12 +75,40 @@ export function StepPanel({ step, onChange, onClose, onDelete, onDuplicate, allS
         <div className="border-t border-slate-100" />
 
         {step.type === "TRIGGER" && (
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Trigger type</label>
-            <div className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-              {TRIGGER_LABELS[cfg.label as string] ?? (cfg.label as string) ?? "—"}
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Trigger type</label>
+              <div className="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                {TRIGGER_LABELS[cfg.label as string] ?? (cfg.label as string) ?? "—"}
+              </div>
+              <p className="text-xs text-slate-400">Set when creating the workflow.</p>
             </div>
-            <p className="text-xs text-slate-400">Set when creating the workflow.</p>
+
+            {/* TAG_ADDED — optional tag filter */}
+            {(cfg.label as string) === "TAG_ADDED" && (
+              <Field label="Tag filter (optional)">
+                <input
+                  value={(cfg.tag as string) ?? ""}
+                  onChange={(e) => set("tag", e.target.value)}
+                  placeholder="e.g. lead — leave blank for any tag"
+                  className={INPUT}
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Only trigger when this specific tag is added.</p>
+              </Field>
+            )}
+
+            {/* CAMPAIGN_OPENED / CAMPAIGN_CLICKED — optional campaign ID filter */}
+            {((cfg.label as string) === "CAMPAIGN_OPENED" || (cfg.label as string) === "CAMPAIGN_CLICKED") && (
+              <Field label="Campaign ID filter (optional)">
+                <input
+                  value={(cfg.campaignId as string) ?? ""}
+                  onChange={(e) => set("campaignId", e.target.value)}
+                  placeholder="Leave blank for any campaign"
+                  className={INPUT}
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Only trigger for a specific campaign.</p>
+              </Field>
+            )}
           </div>
         )}
 
@@ -106,9 +134,9 @@ export function StepPanel({ step, onChange, onClose, onDelete, onDuplicate, allS
                 <option value="days">Days</option>
               </select>
             </Field>
-            <Field label="Amount">
+            <Field label={`Amount (in ${(cfg.unit as string) ?? "minutes"})`}>
               <input type="number" min={1} value={(cfg.delayMinutes as number) ?? 60}
-                onChange={(e) => set("delayMinutes", parseInt(e.target.value) || 60)} className={INPUT} />
+                onChange={(e) => set("delayMinutes", parseInt(e.target.value) || 1)} className={INPUT} />
             </Field>
           </>
         )}

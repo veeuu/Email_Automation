@@ -29,6 +29,7 @@ export const emailWorker = new Worker(
       let successCount = 0;
       for (const recipient of campaign.recipients) {
         if (unsubscribedEmails.has(recipient.email.toLowerCase())) continue;
+        if (recipient.status === "INVALID") continue;
         try {
           const unsub = await prisma.unsubscribeToken.create({
             data: { email: recipient.email, userId: campaign.userId, campaignId },

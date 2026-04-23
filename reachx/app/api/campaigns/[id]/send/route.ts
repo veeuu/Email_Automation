@@ -5,7 +5,7 @@ import { sendEmail } from "@/lib/brevo";
 import { workflowQueue } from "@/lib/workflowQueue";
 
 export async function POST(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
@@ -38,6 +38,10 @@ export async function POST(
   for (const recipient of campaign.recipients) {
     // Skip unsubscribed contacts
     if (unsubscribedEmails.has(recipient.email.toLowerCase())) {
+      continue;
+    }
+    // Skip recipients that failed format/MX validation
+    if (recipient.status === "INVALID") {
       continue;
     }
 
@@ -89,37 +93,30 @@ export async function POST(
       const trigger = (campaign.followUpTrigger ?? "all") as string;
       const firstStep = workflow.steps.find((s) => s.type === "TRIGGER") ?? workflow.steps[0];
 
-      // Determine which recipients qualify based on trigger condition
-      // For "all" and "not_opened"/"not_clicked" we enroll immediately after send.
-      // For "opened"/"clicked" we'd need the tracking webhook — enroll "all" for now
-      // and let the IF_CONDITION step in the workflow filter them.
-      const eligibleEmails = campaign.recipients
-        .filter((r) => {
-          if (trigger === "all") return true;
-          // For event-based triggers, enroll everyone — the workflow IF_CONDITION handles filtering
-          return true;
-        })
-        .map((r) => r.email);
-
-      for (const email of eligibleEmails) {
-        try {
-          const enrollment = await prisma.workflowEnrollment.upsert({
-            where: { workflowId_contactEmail: { workflowId: workflow.id, contactEmail: email } },
-            create: { workflowId: workflow.id, contactEmail: email, currentStepId: firstStep?.id },
-            update: workflow.allowReEnrollment
-              ? { status: "ACTIVE", currentStepId: firstStep?.id }
-              : {},
-          });
-          if (enrollment.status === "ACTIVE") {
-            await workflowQueue.add("process-enrollment", {
-              enrollmentId: enrollment.id,
-              workflowId: workflow.id,
+      // "opened" and "clicked" triggers are handled lazily via /api/track
+      // when the actual event fires. Only enroll immediately for "all".
+      if (trigger === "all") {
+        for (const recipient of campaign.recipients) {
+          try {
+            const enrollment = await prisma.workflowEnrollment.upsert({
+              where: { workflowId_contactEmail: { workflowId: workflow.id, contactEmail: recipient.email } },
+              create: { workflowId: workflow.id, contactEmail: recipient.email, currentStepId: firstStep?.id },
+              update: workflow.allowReEnrollment
+                ? { status: "ACTIVE", currentStepId: firstStep?.id }
+                : {},
             });
+            if (enrollment.status === "ACTIVE") {
+              await workflowQueue.add("process-enrollment", {
+                enrollmentId: enrollment.id,
+                workflowId: workflow.id,
+              });
+            }
+          } catch {
+            // Skip duplicate enrollments silently
           }
-        } catch {
-          // Skip duplicate enrollments silently
         }
       }
+      // "opened" / "clicked" → enrollment happens in /api/track when the event fires
     }
   }
 

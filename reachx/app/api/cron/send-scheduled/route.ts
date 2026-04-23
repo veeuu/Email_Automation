@@ -50,6 +50,11 @@ export async function POST(req: NextRequest) {
         console.log(`[cron] Skipping unsubscribed: ${recipient.email}`);
         continue;
       }
+      if (recipient.status === "INVALID") {
+        skipped++;
+        console.log(`[cron] Skipping invalid recipient: ${recipient.email}`);
+        continue;
+      }
 
       try {
         const unsub = await prisma.unsubscribeToken.create({
